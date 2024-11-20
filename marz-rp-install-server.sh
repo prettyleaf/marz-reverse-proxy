@@ -776,8 +776,8 @@ server {
 #        auth_basic "Restricted Content";
 #        auth_basic_user_file /etc/nginx/.htpasswd;
 #    }
-    # Marz Admin panel
-    location ~* /(sub|dashboard|api|docs|redoc|openapi.json|statics) {
+    # Marz admin panel
+    location ~* /(${SUBPATH}|${WEBBASEPATH}|api|docs|redoc|openapi.json|statics) {
         proxy_redirect off;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
