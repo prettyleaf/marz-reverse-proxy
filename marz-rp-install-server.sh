@@ -916,7 +916,8 @@ panel_installation() {
     HASHED_PASSWORD=$(htpasswd -nbBC 12 "" "${PASSWORD}" | cut -d ':' -f 2)
 
     # Установка и остановка Marzban
-    timeout 60 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --quiet-pull
+    timeout 60 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
+    sleep 1
     read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
     read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
     marzban down
