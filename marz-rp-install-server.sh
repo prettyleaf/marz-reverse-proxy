@@ -825,7 +825,6 @@ update_admins_proxies() {
 UPDATE admins SET username = '$USERNAME', hashed_password = '$HASHED_PASSWORD' WHERE id = 1;
 UPDATE proxies SET settings = '{"id": "$NEW_UUID", "flow": "xtls-rprx-vision"}' WHERE id = 1;
 EOF
-    check_error
 }
 
 # Обновление БД в таблице hosts
@@ -901,14 +900,13 @@ EOF
         sqlite3 "$DB_PATH" <<EOF
 UPDATE hosts SET remark = '$REMARK', address = '$ADDRESS', port = $PORT, sni = '$SNI', host = '$HOST', fingerprint = '$FINGERPRINT', security = '$SECURITY' WHERE id = $ID;
 EOF
-        check_error
     done
 }
 
 ### Установка Marzban ###
 panel_installation() {
     info " $(text 46) "
-    echo "4"
+    echo "5"
     cd ~/
     DB_PATH="/var/lib/marzban/db.sqlite3"
     mkdir -p /usr/local/marz-rp/
