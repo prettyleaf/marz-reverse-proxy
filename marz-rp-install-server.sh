@@ -945,13 +945,9 @@ EOF
     mv /root/xray_config.json /var/lib/marzban/xray_config.json
     rm -rf /root/xray_config*
 
-    CONFIG_FILE="/opt/torrent-blocker/config.yaml"
-    if [[ -f "$CONFIG_FILE" ]]; then
-        sed -i 's|^Log file:.*|Log file: /var/lib/marzban/log/access.log|' "$CONFIG_FILE"
-        echo "Файл конфигурации успешно обновлён."
-    else
-        echo "Файл $CONFIG_FILE не найден."
-    fi
+    sed -i -e 's|^Log file:.*|Log file: /var/lib/marzban/marzban-node/access.log|' \
+           -e 's|^BlockDuration:.*|BlockDuration: 1|' \
+           /opt/torrent-blocker/config.yaml
 
     # Скачивание базы данных
     while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/database/db.sqlite3; do
