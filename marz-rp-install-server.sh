@@ -908,7 +908,7 @@ EOF
 ### Установка Marzban ###
 panel_installation() {
     info " $(text 46) "
-    echo "3"
+    echo "4"
     cd ~/
     DB_PATH="/var/lib/marzban/db.sqlite3"
     mkdir -p /usr/local/marz-rp/
