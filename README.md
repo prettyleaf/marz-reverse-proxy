@@ -72,4 +72,4 @@ The script will then prompt you for the necessary configuration information:
 - All configurations can be modified as needed due to the flexibility of the settings.
 
 ## Stargazers over time
-[![Stargazers over time](https://starchart.cc/cortez24rus/xui-reverse-proxy.svg?variant=adaptive)](https://starchart.cc/cortez24rus/xui-reverse-proxy)
+[![Stargazers over time](https://starchart.cc/cortez24rus/marz-reverse-proxy.svg?variant=adaptive)](https://starchart.cc/cortez24rus/marz-reverse-proxy)
