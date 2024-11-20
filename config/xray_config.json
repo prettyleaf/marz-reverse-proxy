@@ -11,14 +11,7 @@
         "ip": [
           "geoip:private"
         ],
-        "outboundTag": "block",
-        "type": "field"
-      },
-      {
-        "protocol": [
-          "bittorrent"
-        ],
-        "outboundTag": "TORRENT",
+        "outboundTag": "blocked",
         "type": "field"
       },
       {
@@ -26,7 +19,14 @@
         "domain": [
           "geosite:category-ads-all"
         ],
-        "outboundTag": "block"
+        "outboundTag": "blocked"
+      },
+      {
+        "protocol": [
+          "bittorrent"
+        ],
+        "outboundTag": "TORRENT",
+        "type": "field"
       },
       {
         "type": "field",
@@ -204,7 +204,7 @@
       "tag": "TORRENT"
     },
     {
-      "tag": "block",
+      "tag": "blocked",
       "protocol": "blackhole",
       "settings": {}
     },
