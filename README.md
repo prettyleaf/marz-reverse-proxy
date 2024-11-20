@@ -1,5 +1,5 @@
 # MARZ-REVERSE-PROXY ([Russian](/README_RU.md))
-<p align="center"><a href="#"><img src="./media/marz.png" alt="Image" width="300" height="200"></a></p>
+<p align="center"><a href="#"><img src="./media/marz.png" alt="Image" width="400" height="200"></a></p>
 
 -----
 
