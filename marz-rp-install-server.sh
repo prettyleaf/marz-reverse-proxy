@@ -962,11 +962,12 @@ EOF
     mv /var/lib/marzban/db.sqlite3 /var/lib/marzban/db.sqlite3.back
     mv db.sqlite3 /var/lib/marzban/
 
-    # Настройка дизайна подписки
-    sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
-
+    DB_PATH="/var/lib/marzban/db.sqlite3"
     update_admins_proxies
     update_hosts
+
+    # Настройка дизайна подписки
+    sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
 
     marzban up
     echo $PRIVATE_KEY0
