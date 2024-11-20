@@ -411,6 +411,8 @@ data_entry() {
     tilda "$(text 10)"
     check_cf_token
     tilda "$(text 10)"
+    reading " $(text 12) " SECRET_PASSWORD
+    echo
     reading " $(text 19) " REALITY
     tilda "$(text 10)"
     validate_path "CDNGRPC"
@@ -883,24 +885,12 @@ generate_keys() {
     echo "$PRIVATE_KEY $PUBLIC_KEY"
 }
 
-# Функция для обработки ошибок
-check_error() {
-    if [[ $? -eq 0 ]]; then
-        info " $(text 67) "
-    else
-        warning " $(text 68) "
-	return 0;
-    fi
-}
-
 # Обновление БД в таблицах admin, proxies
 update_admins_proxies() {
-    NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
     sqlite3 "$DB_PATH" <<EOF
 UPDATE admins SET username = '$USERNAME', hashed_password = '$HASHED_PASSWORD' WHERE id = 1;
 UPDATE proxies SET settings = '{"id": "$NEW_UUID", "flow": "xtls-rprx-vision"}' WHERE id = 1;
 EOF
-    check_error
 }
 
 # Обновление БД в таблице hosts
@@ -976,26 +966,27 @@ EOF
         sqlite3 "$DB_PATH" <<EOF
 UPDATE hosts SET remark = '$REMARK', address = '$ADDRESS', port = $PORT, sni = '$SNI', host = '$HOST', fingerprint = '$FINGERPRINT', security = '$SECURITY' WHERE id = $ID;
 EOF
-        check_error
     done
 }
 
 ### Установка Marzban ###
 panel_installation() {
     info " $(text 46) "
-
-    mkdir -p /usr/local/marz-rp/
-    touch /usr/local/marz-rp/reinstallation_check
     cd ~/
-
-    read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
-    read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
+    DB_PATH="/var/lib/marzban/db.sqlite3"
+    mkdir -p /usr/local/marz-rp/
+    mkdir -p /var/lib/marzban/log/
+    touch /usr/local/marz-rp/reinstallation_check
+    NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
     HASHED_PASSWORD=$(htpasswd -nbBC 12 "" "${PASSWORD}" | cut -d ':' -f 2)
 
     # Установка и остановка Marzban
-    timeout 66 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
+    timeout 110 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
+    bash <(curl -fsSL git.new/install)
+    read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
+    read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
     marzban down
-
+    
     # Редактирование docker-compose.yml
     cat >> /opt/marzban/docker-compose.yml <<EOF
       - /etc/letsencrypt/live/$DOMAIN/fullchain.pem:/var/lib/marzban/certs/fullchain.pem
@@ -1014,12 +1005,11 @@ EOF
         /opt/marzban/.env
 
     # Скачивание и распаковка xray конфига
-    while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/other/xray_config.json; do
-#    while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/other/xray_config.gpg; do
+    while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/other/xray_config.gpg; do
         warning " $(text 38) "
         sleep 3
     done
-    #echo ${PASSWORD} | gpg --batch --yes --passphrase-fd 0 -d xray_config.gpg > xray_config.json
+    echo ${SECRET_PASSWORD} | gpg --batch --yes --passphrase-fd 0 -d xray_config.gpg > xray_config.json
     
     # Выполняем замены
     sed -i \
@@ -1042,18 +1032,19 @@ EOF
         warning " $(text 38) "
         sleep 3
     done
+
+    rm -rf /var/lib/marzban/db.sqlite3.*
     mv /var/lib/marzban/db.sqlite3 /var/lib/marzban/db.sqlite3.back
     mv db.sqlite3 /var/lib/marzban/
-
-    # Настройка дизайна подписки
-    sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
 
     update_admins_proxies
     update_hosts
 
-    marzban up
-    echo $PRIVATE_KEY0
-    echo $PRIVATE_KEY1
+    # Настройка дизайна подписки
+    sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
+    systemctl stop torrent-blocker
+    systemctl start torrent-blocker
+    timeout 5 marzban up
 
     tilda "$(text 10)"
 }
