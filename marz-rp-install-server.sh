@@ -960,20 +960,17 @@ EOF
         warning " $(text 38) "
         sleep 3
     done
+    pwd
+    update_admins_proxies
+    update_hosts
+    
     rm -rf /var/lib/marzban/db.sqlite3.*
     mv /var/lib/marzban/db.sqlite3 /var/lib/marzban/db.sqlite3.back
     mv db.sqlite3 /var/lib/marzban/
 
-    pwd
-    update_admins_proxies
-    update_hosts
-
     # Настройка дизайна подписки
     sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
-
     timeout 5 marzban up
-    echo $PRIVATE_KEY0
-    echo $PRIVATE_KEY1
 
     tilda "$(text 10)"
 }
