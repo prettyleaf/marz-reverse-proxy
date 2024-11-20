@@ -908,9 +908,9 @@ EOF
 ### Установка Marzban ###
 panel_installation() {
     info " $(text 46) "
-    echo "2"
+    echo "3"
     cd ~/
-    DB_PATH="db.sqlite3"
+    DB_PATH="/var/lib/marzban/db.sqlite3"
     mkdir -p /usr/local/marz-rp/
     touch /usr/local/marz-rp/reinstallation_check
     NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
@@ -918,9 +918,10 @@ panel_installation() {
 
     # Установка и остановка Marzban
     timeout 60 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
-    sleep 1
     read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
     read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
+    echo $PRIVATE_KEY0
+    echo $PRIVATE_KEY1
     marzban down
 
     # Редактирование docker-compose.yml
@@ -961,17 +962,13 @@ EOF
         warning " $(text 38) "
         sleep 3
     done
-    ls
-    pwd
-    update_admins_proxies
-    update_hosts
     
     rm -rf /var/lib/marzban/db.sqlite3.*
-    ls /var/lib/marzban/
     mv /var/lib/marzban/db.sqlite3 /var/lib/marzban/db.sqlite3.back
-    ls /var/lib/marzban/
     mv db.sqlite3 /var/lib/marzban/
-    ls /var/lib/marzban/
+
+    update_admins_proxies
+    update_hosts
 
     # Настройка дизайна подписки
     sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
