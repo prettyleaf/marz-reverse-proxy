@@ -909,10 +909,10 @@ EOF
 ### Установка Marzban ###
 panel_installation() {
     info " $(text 46) "
-    DB_PATH="/var/lib/marzban/db.sqlite3"
+    cd ~/
+    DB_PATH="db.sqlite3"
     mkdir -p /usr/local/marz-rp/
     touch /usr/local/marz-rp/reinstallation_check
-    cd ~/
     HASHED_PASSWORD=$(htpasswd -nbBC 12 "" "${PASSWORD}" | cut -d ':' -f 2)
 
     # Установка и остановка Marzban
@@ -964,13 +964,14 @@ EOF
     mv /var/lib/marzban/db.sqlite3 /var/lib/marzban/db.sqlite3.back
     mv db.sqlite3 /var/lib/marzban/
 
+    pwd
     update_admins_proxies
     update_hosts
 
     # Настройка дизайна подписки
     sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
 
-    marzban up
+    timeout 5 marzban up
     echo $PRIVATE_KEY0
     echo $PRIVATE_KEY1
 
