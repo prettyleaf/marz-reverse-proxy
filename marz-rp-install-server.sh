@@ -945,7 +945,7 @@ EOF
     mv /root/xray_config.json /var/lib/marzban/xray_config.json
     rm -rf /root/xray_config*
 
-    sed -i -e 's|^Log file:.*|Log file: /var/lib/marzban/marzban-node/access.log|' \
+    sed -i -e 's|^Log file:.*|Log file: /var/lib/marzban/log/access.log|' \
            -e 's|^BlockDuration:.*|BlockDuration: 1|' \
            /opt/torrent-blocker/config.yaml
 
@@ -964,7 +964,8 @@ EOF
 
     # Настройка дизайна подписки
     sudo wget -N -P /var/lib/marzban/templates/subscription/ https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
-    systemctl restart torrent-blocker
+    systemctl stop torrent-blocker
+    systemctl start torrent-blocker
     timeout 5 marzban up
 
     tilda "$(text 10)"
