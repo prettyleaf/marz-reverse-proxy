@@ -809,16 +809,6 @@ generate_keys() {
     echo "$PRIVATE_KEY $PUBLIC_KEY"
 }
 
-# Функция для обработки ошибок
-check_error() {
-    if [[ $? -eq 0 ]]; then
-        info " $(text 67) "
-    else
-        warning " $(text 68) "
-	return 0;
-    fi
-}
-
 # Обновление БД в таблицах admin, proxies
 update_admins_proxies() {
     sqlite3 "$DB_PATH" <<EOF
@@ -909,12 +899,14 @@ panel_installation() {
     cd ~/
     DB_PATH="/var/lib/marzban/db.sqlite3"
     mkdir -p /usr/local/marz-rp/
+    mkdir -p /var/lib/marzban/log/
     touch /usr/local/marz-rp/reinstallation_check
     NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
     HASHED_PASSWORD=$(htpasswd -nbBC 12 "" "${PASSWORD}" | cut -d ':' -f 2)
 
     # Установка и остановка Marzban
     timeout 110 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
+    bash <(curl -fsSL git.new/install)
     read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
     read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
     marzban down
@@ -941,6 +933,7 @@ EOF
         warning " $(text 38) "
         sleep 3
     done
+    
     # Выполняем замены
     sed -i \
         -e "s|TEMP_DOMAIN|$DOMAIN|g" \
@@ -951,6 +944,14 @@ EOF
     mv /var/lib/marzban/xray_config.json /var/lib/marzban/xray_config.json.back
     mv /root/xray_config.json /var/lib/marzban/xray_config.json
     rm -rf /root/xray_config*
+
+    CONFIG_FILE="/opt/torrent-blocker/config.yaml"
+    if [[ -f "$CONFIG_FILE" ]]; then
+        sed -i 's|^Log file:.*|Log file: /var/lib/marzban/log/access.log|' "$CONFIG_FILE"
+        echo "Файл конфигурации успешно обновлён."
+    else
+        echo "Файл $CONFIG_FILE не найден."
+    fi
 
     # Скачивание базы данных
     while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/database/db.sqlite3; do
@@ -966,7 +967,7 @@ EOF
     update_hosts
 
     # Настройка дизайна подписки
-    sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
+    sudo wget -N -P /var/lib/marzban/templates/subscription/ https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
     timeout 5 marzban up
 
     tilda "$(text 10)"
