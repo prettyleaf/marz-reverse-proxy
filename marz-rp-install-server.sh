@@ -909,7 +909,7 @@ EOF
 ### Установка Marzban ###
 panel_installation() {
     info " $(text 46) "
-
+    DB_PATH="/var/lib/marzban/db.sqlite3"
     mkdir -p /usr/local/marz-rp/
     touch /usr/local/marz-rp/reinstallation_check
     cd ~/
@@ -962,7 +962,6 @@ EOF
     mv /var/lib/marzban/db.sqlite3 /var/lib/marzban/db.sqlite3.back
     mv db.sqlite3 /var/lib/marzban/
 
-    DB_PATH="/var/lib/marzban/db.sqlite3"
     update_admins_proxies
     update_hosts
 
