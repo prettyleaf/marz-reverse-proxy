@@ -134,8 +134,8 @@ E[58]="SAVE THIS SCREEN!"
 R[58]="СОХРАНИ ЭТОТ ЭКРАН!"
 E[59]="Access the panel at the link:"
 R[59]="Доступ по ссылке к панели:"
-E[60]="Quick subscription link for connection:"
-R[60]="Быстрая ссылка на подписку для подключения:"
+E[60]="Secret key:"
+R[60]="Секретный ключ:"
 E[61]="Access Adguard-home at the link:"
 R[61]="Доступ по ссылке к adguard-home:"
 E[62]="SSH connection:"
@@ -411,7 +411,7 @@ data_entry() {
     tilda "$(text 10)"
     check_cf_token
     tilda "$(text 10)"
-    reading " $(text 12) " SECRET_PASSWORD
+    reading " $(text 60) " SECRET_PASSWORD
     echo
     reading " $(text 19) " REALITY
     tilda "$(text 10)"
@@ -1005,7 +1005,7 @@ EOF
         /opt/marzban/.env
 
     # Скачивание и распаковка xray конфига
-    while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/other/xray_config.gpg; do
+    while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/config/xray_config.gpg; do
         warning " $(text 38) "
         sleep 3
     done
