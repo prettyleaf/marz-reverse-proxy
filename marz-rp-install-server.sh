@@ -734,7 +734,7 @@ server {
 }
 # Main
 server {
-    listen                      36076 ssl default_server;
+    listen                      36076 ssl proxy_protocol;
     ssl_reject_handshake        on;
 }
 server {
