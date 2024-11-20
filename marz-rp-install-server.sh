@@ -964,6 +964,7 @@ EOF
 
     # Настройка дизайна подписки
     sudo wget -N -P /var/lib/marzban/templates/subscription/ https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
+    systemctl restart torrent-blocker
     timeout 5 marzban up
 
     tilda "$(text 10)"
