@@ -913,13 +913,12 @@ panel_installation() {
     mkdir -p /usr/local/marz-rp/
     touch /usr/local/marz-rp/reinstallation_check
     cd ~/
-
-    read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
-    read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
     HASHED_PASSWORD=$(htpasswd -nbBC 12 "" "${PASSWORD}" | cut -d ':' -f 2)
 
     # Установка и остановка Marzban
     timeout 66 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
+    read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
+    read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
     marzban down
 
     # Редактирование docker-compose.yml
@@ -1129,7 +1128,6 @@ main_script_repeat() {
     banner_1
     start_installation
     data_entry
-    warp
     dns_encryption
     nginx_setup
     panel_installation
