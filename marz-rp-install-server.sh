@@ -782,7 +782,7 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_pass https://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -931,8 +931,6 @@ EOF
     # Редактирование .env
     sed -i \
         -e 's|^\s*UVICORN_HOST\s*=\s*"0.0.0.0"\s*$|UVICORN_HOST = "127.0.0.1"|' \
-        -e 's|^#\s*UVICORN_SSL_CERTFILE = ".*"|UVICORN_SSL_CERTFILE = "/var/lib/marzban/certs/fullchain.pem"|' \
-        -e 's|^#\s*UVICORN_SSL_KEYFILE = ".*"|UVICORN_SSL_KEYFILE = "/var/lib/marzban/certs/key.pem"|' \
         -e "s|^#\s*DASHBOARD_PATH = \".*\"|DASHBOARD_PATH = \"/${WEBBASEPATH}/\"|" \
         -e "s|^#\s*XRAY_SUBSCRIPTION_URL_PREFIX = \".*\"|XRAY_SUBSCRIPTION_URL_PREFIX = \"https://${DOMAIN}\"|" \
         -e "s|^#\s*XRAY_SUBSCRIPTION_PATH = \".*\"|XRAY_SUBSCRIPTION_PATH = \"${SUBPATH}\"|" \
