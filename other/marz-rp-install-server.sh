@@ -814,8 +814,8 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
-    # Marz Admin panel
-    location ~* /(sub|dashboard|api|docs|redoc|openapi.json|statics) {
+    # Marz admin panel
+    location ~* /(${SUBPATH}|${WEBBASEPATH}|api|docs|redoc|openapi.json|statics) {
         proxy_redirect off;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
