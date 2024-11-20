@@ -917,8 +917,6 @@ panel_installation() {
     timeout 110 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
     read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
     read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
-    echo $PRIVATE_KEY0
-    echo $PRIVATE_KEY1
     marzban down
 
     # Редактирование docker-compose.yml
