@@ -1,7 +1,6 @@
-[English](/README.md)
 <p align="center"><a href="#"><img src="./media/marz.png" alt="Image"></a></p>
 
-# MARZ-REVERSE-PROXY
+# MARZ-REVERSE-PROXY ([English](/README.md))
 
 -----
 
