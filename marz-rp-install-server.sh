@@ -821,7 +821,6 @@ check_error() {
 
 # Обновление БД в таблицах admin, proxies
 update_admins_proxies() {
-    NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
     sqlite3 "$DB_PATH" <<EOF
 UPDATE admins SET username = '$USERNAME', hashed_password = '$HASHED_PASSWORD' WHERE id = 1;
 UPDATE proxies SET settings = '{"id": "$NEW_UUID", "flow": "xtls-rprx-vision"}' WHERE id = 1;
@@ -909,11 +908,12 @@ EOF
 ### Установка Marzban ###
 panel_installation() {
     info " $(text 46) "
-    echo "1"
+    echo "2"
     cd ~/
     DB_PATH="db.sqlite3"
     mkdir -p /usr/local/marz-rp/
     touch /usr/local/marz-rp/reinstallation_check
+    NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
     HASHED_PASSWORD=$(htpasswd -nbBC 12 "" "${PASSWORD}" | cut -d ':' -f 2)
 
     # Установка и остановка Marzban
@@ -961,13 +961,17 @@ EOF
         warning " $(text 38) "
         sleep 3
     done
+    ls
     pwd
     update_admins_proxies
     update_hosts
     
     rm -rf /var/lib/marzban/db.sqlite3.*
+    ls /var/lib/marzban/
     mv /var/lib/marzban/db.sqlite3 /var/lib/marzban/db.sqlite3.back
+    ls /var/lib/marzban/
     mv db.sqlite3 /var/lib/marzban/
+    ls /var/lib/marzban/
 
     # Настройка дизайна подписки
     sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
