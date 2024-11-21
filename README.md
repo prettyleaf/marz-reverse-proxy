@@ -73,7 +73,7 @@ The script will then prompt you for the necessary configuration information:
 
 -----
 
-## If this program was useful for you, please give it a star ⭐
+### If this program was useful for you, please give it a star ⭐
 
 -----
 
