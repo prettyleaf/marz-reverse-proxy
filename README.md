@@ -73,7 +73,9 @@ The script will then prompt you for the necessary configuration information:
 
 -----
 
-### If this program was useful for you, please give it a star ⭐
+## If this program was useful for you, please give it a star ⭐
+
+-----
 
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/cortez24rus/marz-reverse-proxy.svg?variant=adaptive)](https://starchart.cc/cortez24rus/marz-reverse-proxy)
