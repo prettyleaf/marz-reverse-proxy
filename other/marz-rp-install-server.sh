@@ -1012,15 +1012,15 @@ EOF
 
     # Редактирование .env
     sed -i \
-        -e 's|^#?\s*UVICORN_HOST.*|UVICORN_HOST = "127.0.0.1"|' \
-        -e "s|^#?\s*DASHBOARD_PATH.*|DASHBOARD_PATH = \"/${WEBBASEPATH}/\"|" \
-        -e "s|^#?\s*XRAY_SUBSCRIPTION_URL_PREFIX.*|XRAY_SUBSCRIPTION_URL_PREFIX = \"https://${DOMAIN}\"|" \
-        -e "s|^#?\s*XRAY_SUBSCRIPTION_PATH.*|XRAY_SUBSCRIPTION_PATH = \"${SUBPATH}\"|" \
-        -e 's|^#?\s*TELEGRAM_DEFAULT_VLESS_FLOW.*|TELEGRAM_DEFAULT_VLESS_FLOW = "xtls-rprx-vision"|' \
-        -e 's|^#?\s*CUSTOM_TEMPLATES_DIRECTORY.*|CUSTOM_TEMPLATES_DIRECTORY = "/var/lib/marzban/templates/"|' \
-        -e 's|^#?\s*SUBSCRIPTION_PAGE_TEMPLATE.*|SUBSCRIPTION_PAGE_TEMPLATE = "subscription/index.html"|' \
-        -e "s|^#?\s*TELEGRAM_API_TOKEN.*|TELEGRAM_API_TOKEN = \"${BOT_TOKEN_PANEL}\"|" \
-        -e "s|^#?\s*TELEGRAM_ADMIN_ID.*|TELEGRAM_ADMIN_ID = \"${ADMIN_ID}\"|" \
+        -e 's|^#\?s*UVICORN_HOST.*|UVICORN_HOST = "127.0.0.1"|' \
+        -e 's|^#\?s*DASHBOARD_PATH.*|DASHBOARD_PATH = "/${WEBBASEPATH}/"|' \
+        -e 's|^#\?s*XRAY_SUBSCRIPTION_URL_PREFIX.*|XRAY_SUBSCRIPTION_URL_PREFIX = "https://${DOMAIN}"|' \
+        -e 's|^#\?s*XRAY_SUBSCRIPTION_PATH.*|XRAY_SUBSCRIPTION_PATH = "${SUBPATH}|' \
+        -e 's|^#\?s*TELEGRAM_DEFAULT_VLESS_FLOW.*|TELEGRAM_DEFAULT_VLESS_FLOW = "xtls-rprx-vision"|' \
+        -e 's|^#\?s*CUSTOM_TEMPLATES_DIRECTORY.*|CUSTOM_TEMPLATES_DIRECTORY = "/var/lib/marzban/templates/"|' \
+        -e 's|^#\?s*SUBSCRIPTION_PAGE_TEMPLATE.*|SUBSCRIPTION_PAGE_TEMPLATE = "subscription/index.html"|' \
+        -e 's|^#\?s*TELEGRAM_API_TOKEN.*|TELEGRAM_API_TOKEN = "${BOT_TOKEN_PANEL}"|' \
+        -e 's|^#\?s*TELEGRAM_ADMIN_ID.*|TELEGRAM_ADMIN_ID = "${ADMIN_ID}"|' \
         /opt/marzban/.env
 
     # Скачивание и распаковка xray конфига
