@@ -790,7 +790,8 @@ server {
     add_header X-XSS-Protection          "1; mode=block" always;
     add_header X-Content-Type-Options    "nosniff" always;
     add_header Referrer-Policy           "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none';" always;
+#    add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none';" always;
+#    add_header Content-Security-Policy   "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'self';" always;
     add_header Permissions-Policy        "interest-cohort=()" always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     add_header X-Frame-Options           "SAMEORIGIN";
