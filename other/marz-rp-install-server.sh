@@ -82,8 +82,8 @@ E[32]="Systemd-resolved selected."
 R[32]="Выбран systemd-resolved."
 E[33]="Error: invalid choice, please try again."
 R[33]="Ошибка: неверный выбор, попробуйте снова."
-E[34]="Enter Telegram bot token:"
-R[34]="Введите токен Telegram бота:"
+R[34]="Enter the Telegram bot token for the control panel:"
+R[34]="Введите токен Telegram бота для панели управления:"
 E[35]="Enter your Telegram ID:"
 R[35]="Введите ваш Telegram ID:"
 E[36]="Updating system and installing necessary packages."
@@ -148,10 +148,10 @@ E[65]="Log file path:"
 R[65]="Путь к лог файлу:"
 E[66]="Prometheus monitor."
 R[66]="Мониторинг Prometheus."
-E[66]="Data successfully updated."
-R[66]="Данные успешно обновлены."
-E[67]="Error updating data."
-R[67]="Ошибка при обновлении данных."
+E[66]="Prometheus monitor."
+R[66]="Мониторинг Prometheus."
+E[67]="Enter the Telegram bot token for torrent block notifications:"
+R[67]="Введите токен Telegram бота для уведомлений о блокировке торрентов:"
 
 log_entry() {
     mkdir -p /usr/local/marz-rp/
@@ -431,6 +431,16 @@ data_entry() {
     echo
     validate_path SUBPATH
     tilda "$(text 10)"
+
+    # Запрос дополнительных данных при передаче флага -bot
+    if [[ "$enable_bot" == true ]]; then
+        reading " $(text 35) " ADMIN_ID
+        echo
+        reading " $(text 34) " BOT_TOKEN_PANEL
+        echo
+        reading " $(text 67) " BOT_TOKEN_BAN_TORRENT
+        tilda "$(text 10)"
+    fi
 
     WEBCERTFILE=/etc/letsencrypt/live/${DOMAIN}/fullchain.pem
     WEBKEYFILE=/etc/letsencrypt/live/${DOMAIN}/privkey.pem
@@ -1217,6 +1227,24 @@ main_script_repeat() {
 main_choise() {
     log_entry
     select_language
+
+    ENABLE_BOT="false"
+    ENABLE_WARP="false"
+    
+    for flag in "$@"; do
+        case $flag in
+            -bot)  # если передан флаг -bot
+                ENABLE_BOT="true"
+                ;;
+            -warp)  # если передан флаг -warp
+                ENABLE_WARP="true"
+                ;;
+            *)
+                echo "Неизвестный флаг: $flag"
+                ;;
+        esac
+    done
+    
     if [ -f /usr/local/marz-rp/reinstallation_check ]; then
         info " $(text 4) "
         sleep 2
@@ -1226,4 +1254,4 @@ main_choise() {
     fi
 }
 
-main_choise
+main_choise "$@"
