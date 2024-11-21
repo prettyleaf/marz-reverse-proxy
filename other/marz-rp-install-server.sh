@@ -279,7 +279,7 @@ check_cf_token() {
 
         DOMAIN=$(crop_domain "$DOMAIN")
         
-    if [[ $? -ne 0 ]]; then
+        if [[ $? -ne 0 ]]; then
             DOMAIN=""
             continue
         fi
@@ -383,20 +383,21 @@ validate_path() {
 choise_dns () {
     while true; do
         hint " $(text 31) \n" && reading " $(text 1) " CHOISE
-        case $CHOISE in
+        case $CHOISE in 
             1)
-                info " $(text 32) "
                 tilda "$(text 10)"
+                info " $(text 32)"
+		break
+                ;;
+            2)
+                tilda "$(text 10)"
+		info " $(text 25)"
+                validate_path ADGUARDPATH
+                echo
                 break
                 ;;
-#            2)
-#               tilda "$(text 10)"
-#               validate_path ADGUARDPATH
-#               echo
-#               break
-#               ;;
             *)
-                info " $(text )"
+                info " $(text 33)"
                 ;;
         esac
     done
@@ -503,9 +504,6 @@ dns_adguard_home() {
     sed -i \
       -e "s/\${USERNAME}/username/g" \
       -e "s/\${HASH}/hash/g" \
-      -e "s/\${DOMAIN}/domain_temp/g" \
-      -e "s/\${WEBCERTFILE}/fullchain.pem/g" \
-      -e "s/\${WEBKEYFILE}/privkey.pem/g" \
       AdGuardHome/AdGuardHome.yaml
 
     AdGuardHome/AdGuardHome -s restart
@@ -1206,7 +1204,6 @@ main_script_repeat() {
     banner_1
     start_installation
     data_entry
-    warp
     dns_encryption
     nginx_setup
     panel_installation
