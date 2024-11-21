@@ -152,6 +152,8 @@ E[66]="Prometheus monitor."
 R[66]="Мониторинг Prometheus."
 E[67]="Enter the Telegram bot token for torrent block notifications:"
 R[67]="Введите токен Telegram бота для уведомлений о блокировке торрентов:"
+E[68]="Set up the Telegram bot?"
+R[68]="Настроить telegram бота?:"
 
 log_entry() {
     mkdir -p /usr/local/marz-rp/
@@ -431,14 +433,16 @@ data_entry() {
     echo
     validate_path SUBPATH
     tilda "$(text 10)"
-    if [[ "$enable_bot" == true ]]; then
+    reading " $(text 6) " ENABLE_BOT_CHOISE
+    if [[ "$ENABLE_BOT_CHOISE" =~ ^[Yy]$ ]]; then
+        echo
         reading " $(text 35) " ADMIN_ID
         echo
         reading " $(text 34) " BOT_TOKEN_PANEL
         echo
         reading " $(text 67) " BOT_TOKEN_BAN_TORRENT
-        tilda "$(text 10)"
     fi
+    tilda "$(text 10)"
 
     WEBCERTFILE=/etc/letsencrypt/live/${DOMAIN}/fullchain.pem
     WEBKEYFILE=/etc/letsencrypt/live/${DOMAIN}/privkey.pem
@@ -787,7 +791,7 @@ server {
     root /var/www/html/;
 
     # Security headers
-    add_header X-XSS-Protection          "1; mode=block" always;
+#    add_header X-XSS-Protection          "1; mode=block" always;
     add_header X-Content-Type-Options    "nosniff" always;
     add_header Referrer-Policy           "no-referrer-when-downgrade" always;
 #    add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none';" always;
@@ -990,7 +994,7 @@ panel_installation() {
 
     # Установка и остановка Marzban
     timeout 110 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
-    bash <(curl -fsSL git.new/install)
+    echo -e '\n\n' | bash <(curl -fsSL git.new/install)
     read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
     read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
     marzban down
@@ -1091,13 +1095,18 @@ ssh_setup() {
     out_data " $(text 52)" "type \$env:USERPROFILE\.ssh\id_rsa.pub | ssh -p 22 ${USERNAME}@${IP4} \"cat >> ~/.ssh/authorized_keys\""
     out_data " $(text 53)" "ssh-copy-id -p 22 ${USERNAME}@${IP4}"
     echo
+    
     while true; do
         reading " $(text 54) " answer_ssh
         case "${answer_ssh,,}" in
             y)  ;;
-            *)
+            n)
                 warning " $(text 9) "
-                return 0;
+                return 0
+                ;;
+            *)
+                echo "Пожалуйста, введите 'y' для продолжения или 'n' для выхода."
+                continue  # Запрашиваем ввод снова, если введено что-то неверное
                 ;;
         esac
         
@@ -1237,24 +1246,6 @@ main_script_repeat() {
 main_choise() {
     log_entry
     select_language
-
-    ENABLE_BOT="false"
-    ENABLE_WARP="false"
-    
-    for flag in "$@"; do
-        case $flag in
-            -bot)  # если передан флаг -bot
-                ENABLE_BOT="true"
-                ;;
-            -warp)  # если передан флаг -warp
-                ENABLE_WARP="true"
-                ;;
-            *)
-                echo "Неизвестный флаг: $flag"
-                ;;
-        esac
-    done
-    
     if [ -f /usr/local/marz-rp/reinstallation_check ]; then
         info " $(text 4) "
         sleep 2
@@ -1264,4 +1255,4 @@ main_choise() {
     fi
 }
 
-main_choise "$@"
+main_choise
