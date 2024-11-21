@@ -152,8 +152,8 @@ E[66]="Prometheus monitor."
 R[66]="Мониторинг Prometheus."
 E[67]="Enter the Telegram bot token for torrent block notifications:"
 R[67]="Введите токен Telegram бота для уведомлений о блокировке торрентов:"
-E[68]="Set up the Telegram bot?"
-R[68]="Настроить telegram бота?:"
+E[68]="Set up the Telegram bot? [y/N]:"
+R[68]="Настроить telegram бота? [y/N]:"
 
 log_entry() {
     mkdir -p /usr/local/marz-rp/
