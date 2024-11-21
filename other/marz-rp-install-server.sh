@@ -433,8 +433,8 @@ data_entry() {
     echo
     validate_path SUBPATH
     tilda "$(text 10)"
-    reading " $(text 6) " ENABLE_BOT_CHOISE
-    if [[ "$ENABLE_BOT_CHOISE" =~ ^[Yy]$ ]]; then
+    reading " $(text 68) " ENABLE_BOT_CHOISE
+    if [[ -z "$ENABLE_BOT_CHOISE" || "$ENABLE_BOT_CHOISE" =~ ^[Yy]$ ]]; then
         echo
         reading " $(text 35) " ADMIN_ID
         echo
