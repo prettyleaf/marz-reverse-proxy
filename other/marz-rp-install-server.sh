@@ -1100,10 +1100,9 @@ ssh_setup() {
     out_data " $(text 52)" "type \$env:USERPROFILE\.ssh\id_rsa.pub | ssh -p 22 ${USERNAME}@${IP4} \"cat >> ~/.ssh/authorized_keys\""
     out_data " $(text 53)" "ssh-copy-id -p 22 ${USERNAME}@${IP4}"
     echo
-    
     while true; do
-        reading " $(text 54) " answer_ssh
-        case "${answer_ssh,,}" in
+        reading " $(text 54) " ANSWER_SSH
+        case "${ANSWER_SSH,,}" in
             y)  ;;
             n)
                 warning " $(text 9) "
@@ -1187,7 +1186,6 @@ data_output() {
     out_data " $(text 59) " "https://${DOMAIN}/${WEBBASEPATH}/"
     if [[ $choise = "1" ]]; then
         out_data " $(text 61) " "https://${DOMAIN}/${ADGUARDPATH}/login.html"
-        
     fi
     echo
     out_data " $(text 62) " "ssh -p 36079 ${USERNAME}@${IP4}"
