@@ -938,7 +938,7 @@ EOF
                 REMARK="🚀 HTTPU {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
                 ADDRESS="${DOMAIN}"
                 PORT="443"
-                SNI=""
+                SNI="${DOMAIN}"
                 HOST="${DOMAIN}"
                 SECURITY="inbound_default"
                 FINGERPRINT="random"
