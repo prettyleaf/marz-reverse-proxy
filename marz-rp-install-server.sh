@@ -912,7 +912,6 @@ panel_installation() {
 
     # Установка и остановка Marzban
     timeout 110 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
-    bash <(curl -fsSL git.new/install)
     read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
     read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
     marzban down
@@ -954,6 +953,7 @@ EOF
     mv /root/xray_config.json /var/lib/marzban/xray_config.json
     rm -rf /root/xray_config*
 
+#    bash <(curl -fsSL git.new/install)
     sed -i \
         -e "s|^#?\s*AdminChatID:.*|AdminChatID: \"${ADMIN_ID}\"|" \
         -e "s|^#?\s*AdminBotToken:.*|AdminBotToken: \"${BOT_TOKEN_BAN_TORRENT}\"|" \
