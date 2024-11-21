@@ -417,13 +417,12 @@ data_entry() {
     echo
     validate_path SUBPATH
     tilda "$(text 10)"
-    # Запрос дополнительных данных при передаче флага -bot
     if [[ "$enable_bot" == true ]]; then
-	    reading " $(text 35) " ADMIN_ID
+        reading " $(text 35) " ADMIN_ID
         echo
-	    reading " $(text 34) " BOT_TOKEN_PANEL
+        reading " $(text 34) " BOT_TOKEN_PANEL
         echo
-	    reading " $(text 67) " BOT_TOKEN_BAN_TORRENT
+        reading " $(text 67) " BOT_TOKEN_BAN_TORRENT
         tilda "$(text 10)"
     fi
 
@@ -926,13 +925,15 @@ EOF
 
     # Редактирование .env
     sed -i \
-        -e 's|^\s*UVICORN_HOST\s*=\s*"0.0.0.0"\s*$|UVICORN_HOST = "127.0.0.1"|' \
-        -e "s|^#\s*DASHBOARD_PATH = \".*\"|DASHBOARD_PATH = \"/${WEBBASEPATH}/\"|" \
-        -e "s|^#\s*XRAY_SUBSCRIPTION_URL_PREFIX = \".*\"|XRAY_SUBSCRIPTION_URL_PREFIX = \"https://${DOMAIN}\"|" \
-        -e "s|^#\s*XRAY_SUBSCRIPTION_PATH = \".*\"|XRAY_SUBSCRIPTION_PATH = \"${SUBPATH}\"|" \
-        -e 's|^#\s*TELEGRAM_DEFAULT_VLESS_FLOW = ".*"|TELEGRAM_DEFAULT_VLESS_FLOW = "xtls-rprx-vision"|' \
-        -e 's|# CUSTOM_TEMPLATES_DIRECTORY=".*"|CUSTOM_TEMPLATES_DIRECTORY="/var/lib/marzban/templates/"|' \
-        -e 's|# SUBSCRIPTION_PAGE_TEMPLATE=".*"|SUBSCRIPTION_PAGE_TEMPLATE="subscription/index.html"|' \
+        -e 's|^#?\s*UVICORN_HOST.*|UVICORN_HOST = "127.0.0.1"|' \
+        -e "s|^#?\s*DASHBOARD_PATH.*|DASHBOARD_PATH = \"/${WEBBASEPATH}/\"|" \
+        -e "s|^#?\s*XRAY_SUBSCRIPTION_URL_PREFIX.*|XRAY_SUBSCRIPTION_URL_PREFIX = \"https://${DOMAIN}\"|" \
+        -e "s|^#?\s*XRAY_SUBSCRIPTION_PATH.*|XRAY_SUBSCRIPTION_PATH = \"${SUBPATH}\"|" \
+        -e 's|^#?\s*TELEGRAM_DEFAULT_VLESS_FLOW.*|TELEGRAM_DEFAULT_VLESS_FLOW = "xtls-rprx-vision"|' \
+        -e 's|^#?\s*CUSTOM_TEMPLATES_DIRECTORY.*|CUSTOM_TEMPLATES_DIRECTORY = "/var/lib/marzban/templates/"|' \
+        -e 's|^#?\s*SUBSCRIPTION_PAGE_TEMPLATE.*|SUBSCRIPTION_PAGE_TEMPLATE = "subscription/index.html"|' \
+        -e "s|^#?\s*TELEGRAM_API_TOKEN.*|TELEGRAM_API_TOKEN = \"${BOT_TOKEN_PANEL}\"|" \
+        -e "s|^#?\s*TELEGRAM_ADMIN_ID.*|TELEGRAM_ADMIN_ID = \"${ADMIN_ID}\"|" \
         /opt/marzban/.env
 
     # Скачивание и распаковка xray конфига
@@ -947,14 +948,18 @@ EOF
         -e "s|TEMP_PRIVATEKEY0|$PRIVATE_KEY0|g" \
         -e "s|TEMP_PRIVATEKEY1|$PRIVATE_KEY1|g" \
         /root/xray_config.json
+
     rm -rf /var/lib/marzban/xray_config.json.*
     mv /var/lib/marzban/xray_config.json /var/lib/marzban/xray_config.json.back
     mv /root/xray_config.json /var/lib/marzban/xray_config.json
     rm -rf /root/xray_config*
 
-    sed -i -e 's|^Log file:.*|Log file: /var/lib/marzban/log/access.log|' \
-           -e 's|^BlockDuration:.*|BlockDuration: 1|' \
-           /opt/torrent-blocker/config.yaml
+    sed -i \
+        -e "s|^#?\s*AdminChatID:.*|AdminChatID: \"${ADMIN_ID}\"|" \
+        -e "s|^#?\s*AdminBotToken:.*|AdminBotToken: \"${BOT_TOKEN_BAN_TORRENT}\"|" \
+        -e "s|^#?\s*LogFile:.*|LogFile: \"/var/lib/marzban/log/access.log\"|" \
+        -e "s|^#?\s*BlockDuration:.*|BlockDuration: 11|" \
+        /opt/torrent-blocker/config.yaml
 
     # Скачивание базы данных
     while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/database/db.sqlite3; do
