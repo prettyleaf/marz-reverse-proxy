@@ -389,14 +389,15 @@ choise_dns () {
                 tilda "$(text 10)"
                 break
                 ;;
-#            2)
-#               tilda "$(text 10)"
-#               validate_path ADGUARDPATH
-#               echo
-#               break
-#               ;;
+            2)
+                tilda "$(text 10)"
+                tilda "$(text 25)"
+                validate_path ADGUARDPATH
+                echo
+                break
+                ;;
             *)
-                info " $(text )"
+                info " $(text 33)"
                 ;;
         esac
     done
@@ -489,9 +490,6 @@ dns_adguard_home() {
     sed -i \
       -e "s/\${USERNAME}/username/g" \
       -e "s/\${HASH}/hash/g" \
-      -e "s/\${DOMAIN}/domain_temp/g" \
-      -e "s/\${WEBCERTFILE}/fullchain.pem/g" \
-      -e "s/\${WEBKEYFILE}/privkey.pem/g" \
       AdGuardHome/AdGuardHome.yaml
 
     AdGuardHome/AdGuardHome -s restart
