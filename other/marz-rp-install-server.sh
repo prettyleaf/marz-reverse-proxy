@@ -651,6 +651,7 @@ issuance_of_certificates() {
     certbot certonly --dns-cloudflare --dns-cloudflare-credentials /root/cloudflare.credentials --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
     { crontab -l; echo "0 5 1 */2 * certbot -q renew"; } | crontab -
     echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
+    openssl dhparam -out /etc/nginx/dhparam.pem 2048
     tilda "$(text 10)"
 }
 
@@ -665,6 +666,7 @@ monitoring() {
 nginx_setup() {
     info " $(text 45) "
     mkdir -p /etc/nginx/stream-enabled/
+    rm -rf /etc/nginx/conf.d/default.conf
     touch /etc/nginx/.htpasswd
     htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
 
@@ -786,6 +788,9 @@ server {
     ssl_certificate             ${WEBCERTFILE};
     ssl_certificate_key         ${WEBKEYFILE};
     ssl_trusted_certificate     /etc/letsencrypt/live/${DOMAIN}/chain.pem;
+
+    # Diffie-Hellman parameter for DHE ciphersuites
+    ssl_dhparam                          /etc/nginx/dhparam.pem;
 
     index index.html index.htm index.php index.nginx-debian.html;
     root /var/www/html/;
