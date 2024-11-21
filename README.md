@@ -71,7 +71,7 @@ The script will then prompt you for the necessary configuration information:
 - Once the configuration is complete, the script will display all the necessary links and login information for the MARZBAN administration panel.
 - All configurations can be modified as needed due to the flexibility of the settings.
 
-# If this program was useful for you, please give it a star ⭐
+### If this program was useful for you, please give it a star ⭐
 
-## Stargazers over time
+### Stargazers over time
 [![Stargazers over time](https://starchart.cc/cortez24rus/marz-reverse-proxy.svg?variant=adaptive)](https://starchart.cc/cortez24rus/marz-reverse-proxy)
