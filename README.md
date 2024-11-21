@@ -12,6 +12,8 @@ This script is designed to quickly and easily set up a hidden proxy server, with
 > [!NOTE]
 > The script is configured according to routing rules for users in Russia.
 
+-----
+
 ### Setting up cloudflare
 1. Upgrade the system and reboot the server.
 2. Configure Cloudflare:
