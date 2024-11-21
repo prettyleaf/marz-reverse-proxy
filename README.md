@@ -35,7 +35,8 @@ This script is designed to quickly and easily set up a hidden proxy server, with
 1. Xray server configuration with MARZBAN:
    - VLESS-TCP-XTLS-Vision и VLESS-TCP-REALITY (Steal from yourself).
    - Connection of subscription for automatic configuration updates.
-   - Marzban-torrent-blocker (kutovoys).
+   - [Marzban custom subcription](https://github.com/x0sina/marzban-sub).
+   - [Marzban torrent blocker](https://github.com/kutovoys/marzban-torrent-blocker).
 2. Configuring NGINX reverse proxy on port 443.
 3. Providing security:
    - Automatic system updates via unattended-upgrades.
