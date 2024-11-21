@@ -651,7 +651,6 @@ issuance_of_certificates() {
     certbot certonly --dns-cloudflare --dns-cloudflare-credentials /root/cloudflare.credentials --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
     { crontab -l; echo "0 5 1 */2 * certbot -q renew"; } | crontab -
     echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
-    openssl dhparam -out /etc/nginx/dhparam.pem 2048
     tilda "$(text 10)"
 }
 
@@ -667,6 +666,7 @@ nginx_setup() {
     info " $(text 45) "
     mkdir -p /etc/nginx/stream-enabled/
     rm -rf /etc/nginx/conf.d/default.conf
+    openssl dhparam -out /etc/nginx/dhparam.pem 2048
     touch /etc/nginx/.htpasswd
     htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
 
@@ -796,7 +796,7 @@ server {
     root /var/www/html/;
 
     # Security headers
-#    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-XSS-Protection          "0" always;
     add_header X-Content-Type-Options    "nosniff" always;
     add_header Referrer-Policy           "no-referrer-when-downgrade" always;
 #    add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none';" always;
@@ -1048,10 +1048,10 @@ EOF
     rm -rf /root/xray_config*
 
     sed -i \
-        -e "s|^#?\s*AdminChatID:.*|AdminChatID: \"${ADMIN_ID}\"|" \
-        -e "s|^#?\s*AdminBotToken:.*|AdminBotToken: \"${BOT_TOKEN_BAN_TORRENT}\"|" \
-        -e "s|^#?\s*LogFile:.*|LogFile: \"/var/lib/marzban/log/access.log\"|" \
-        -e "s|^#?\s*BlockDuration:.*|BlockDuration: 11|" \
+        -e "s|^#\?\s*AdminChatID:.*$|AdminChatID: \"${ADMIN_ID}\"|" \
+        -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_TORRENT}\"|" \
+        -e "s|^#\?\s*LogFile:.*$|LogFile: \"/var/lib/marzban/log/access.log\"|" \
+        -e "s|^#\?\s*BlockDuration:.*$|BlockDuration: 1|" \
         /opt/torrent-blocker/config.yaml
 
     # Скачивание базы данных
