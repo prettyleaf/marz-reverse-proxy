@@ -75,7 +75,7 @@ The script will then prompt you for the necessary configuration information:
 
 -----
 
-### If this program was useful for you, please give it a star ⭐
+### If this script was useful for you, give it a star ⭐
 
 -----
 
