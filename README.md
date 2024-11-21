@@ -34,9 +34,10 @@ This script is designed to quickly and easily set up a hidden proxy server, with
   
 1. Xray server configuration with MARZBAN:
    - VLESS-TCP-XTLS-Vision и VLESS-TCP-REALITY (Steal from yourself).
-   - Connection of subscription and JSON subscription for automatic configuration updates.
+   - Connection of subscription for automatic configuration updates.
+   - Marzban-torrent-blocker (kutovoys).
 2. Configuring NGINX reverse proxy on port 443.
-3. providing security:
+3. Providing security:
    - Automatic system updates via unattended-upgrades.
 4. Configuring Cloudflare SSL certificates with automatic updates to secure connections.
 5. Configuring WARP to protect traffic.
@@ -44,7 +45,7 @@ This script is designed to quickly and easily set up a hidden proxy server, with
 7. Configuring UFW (Uncomplicated Firewall) for access control.
 8. Configuring SSH, to provide the minimum required security.
 9. Disabling IPv6 to prevent possible vulnerabilities.
-10. Encrypting DNS queries using systemd-resolved or AdGuard Home (Temporarily removed).
+10. Encrypting DNS queries using systemd-resolved (Dot) or AdGuard Home (DoH-Dot).
 11. Selecting a random website from an array to add an extra layer of privacy and complexity for traffic analysis.
 
 -----
