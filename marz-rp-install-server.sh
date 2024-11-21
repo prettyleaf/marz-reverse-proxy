@@ -152,6 +152,8 @@ E[66]="Prometheus monitor."
 R[66]="Мониторинг Prometheus."
 E[67]="Enter the Telegram bot token for torrent block notifications:"
 R[67]="Введите токен Telegram бота для уведомлений о блокировке торрентов:"
+E[68]="Set up the Telegram bot?"
+R[68]="Настроить telegram бота?:"
 
 log_entry() {
     mkdir -p /usr/local/marz-rp/
@@ -417,14 +419,21 @@ data_entry() {
     echo
     validate_path SUBPATH
     tilda "$(text 10)"
-    if [[ "$enable_bot" == true ]]; then
+    reading " $(text 68) " ENABLE_BOT_CHOISE
+    if [[ -z "$ENABLE_BOT_CHOISE" || "$ENABLE_BOT_CHOISE" =~ ^[Yy]$ ]]; then
+        echo
         reading " $(text 35) " ADMIN_ID
         echo
         reading " $(text 34) " BOT_TOKEN_PANEL
         echo
         reading " $(text 67) " BOT_TOKEN_BAN_TORRENT
-        tilda "$(text 10)"
     fi
+    tilda "$(text 10)"
+
+    WEBCERTFILE=/etc/letsencrypt/live/${DOMAIN}/fullchain.pem
+    WEBKEYFILE=/etc/letsencrypt/live/${DOMAIN}/privkey.pem
+    SUBURI=https://${DOMAIN}/${SUBPATH}/
+    SUBJSONURI=https://${DOMAIN}/${SUBJSONPATH}/
 
     WEBCERTFILE=/etc/letsencrypt/live/${DOMAIN}/fullchain.pem
     WEBKEYFILE=/etc/letsencrypt/live/${DOMAIN}/privkey.pem
@@ -640,6 +649,8 @@ issuance_of_certificates() {
 nginx_setup() {
     info " $(text 45) "
     mkdir -p /etc/nginx/stream-enabled/
+    rm -rf /etc/nginx/conf.d/default.conf
+    openssl dhparam -out /etc/nginx/dhparam.pem 2048
     touch /etc/nginx/.htpasswd
 
     nginx_conf
@@ -757,7 +768,7 @@ server {
     root /var/www/html/;
 
     # Security headers
-    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-XSS-Protection          "0" always;
     add_header X-Content-Type-Options    "nosniff" always;
     add_header Referrer-Policy           "no-referrer-when-downgrade" always;
     add_header Permissions-Policy        "interest-cohort=()" always;
@@ -912,6 +923,7 @@ panel_installation() {
 
     # Установка и остановка Marzban
     timeout 110 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
+    echo -e '\n\n' | bash <(curl -fsSL git.new/install)
     read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
     read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
     marzban down
@@ -924,15 +936,15 @@ EOF
 
     # Редактирование .env
     sed -i \
-        -e 's|^#?\s*UVICORN_HOST.*|UVICORN_HOST = "127.0.0.1"|' \
-        -e "s|^#?\s*DASHBOARD_PATH.*|DASHBOARD_PATH = \"/${WEBBASEPATH}/\"|" \
-        -e "s|^#?\s*XRAY_SUBSCRIPTION_URL_PREFIX.*|XRAY_SUBSCRIPTION_URL_PREFIX = \"https://${DOMAIN}\"|" \
-        -e "s|^#?\s*XRAY_SUBSCRIPTION_PATH.*|XRAY_SUBSCRIPTION_PATH = \"${SUBPATH}\"|" \
-        -e 's|^#?\s*TELEGRAM_DEFAULT_VLESS_FLOW.*|TELEGRAM_DEFAULT_VLESS_FLOW = "xtls-rprx-vision"|' \
-        -e 's|^#?\s*CUSTOM_TEMPLATES_DIRECTORY.*|CUSTOM_TEMPLATES_DIRECTORY = "/var/lib/marzban/templates/"|' \
-        -e 's|^#?\s*SUBSCRIPTION_PAGE_TEMPLATE.*|SUBSCRIPTION_PAGE_TEMPLATE = "subscription/index.html"|' \
-        -e "s|^#?\s*TELEGRAM_API_TOKEN.*|TELEGRAM_API_TOKEN = \"${BOT_TOKEN_PANEL}\"|" \
-        -e "s|^#?\s*TELEGRAM_ADMIN_ID.*|TELEGRAM_ADMIN_ID = \"${ADMIN_ID}\"|" \
+        -e "s|^#\?\s*UVICORN_HOST.*$|UVICORN_HOST = \"127.0.0.1\"|" \
+        -e "s|^#\?\s*DASHBOARD_PATH.*$|DASHBOARD_PATH = \"/${WEBBASEPATH}/\"|" \
+        -e "s|^#\?\s*XRAY_SUBSCRIPTION_URL_PREFIX.*$|XRAY_SUBSCRIPTION_URL_PREFIX = \"https://${DOMAIN}\"|" \
+        -e "s|^#\?\s*XRAY_SUBSCRIPTION_PATH.*$|XRAY_SUBSCRIPTION_PATH = \"${SUBPATH}\"|" \
+        -e "s|^#\?\s*TELEGRAM_DEFAULT_VLESS_FLOW.*$|TELEGRAM_DEFAULT_VLESS_FLOW = \"xtls-rprx-vision\"|" \
+        -e "s|^#\?\s*CUSTOM_TEMPLATES_DIRECTORY.*$|CUSTOM_TEMPLATES_DIRECTORY = \"/var/lib/marzban/templates/\"|" \
+        -e "s|^#\?\s*SUBSCRIPTION_PAGE_TEMPLATE.*$|SUBSCRIPTION_PAGE_TEMPLATE = \"subscription/index.html\"|" \
+        -e "s|^#\?\s*TELEGRAM_API_TOKEN.*$|TELEGRAM_API_TOKEN = \"${BOT_TOKEN_PANEL}\"|" \
+        -e "s|^#\?\s*TELEGRAM_ADMIN_ID.*$|TELEGRAM_ADMIN_ID = \"${ADMIN_ID}\"|" \
         /opt/marzban/.env
 
     # Скачивание и распаковка xray конфига
@@ -955,10 +967,10 @@ EOF
 
 #    bash <(curl -fsSL git.new/install)
     sed -i \
-        -e "s|^#?\s*AdminChatID:.*|AdminChatID: \"${ADMIN_ID}\"|" \
-        -e "s|^#?\s*AdminBotToken:.*|AdminBotToken: \"${BOT_TOKEN_BAN_TORRENT}\"|" \
-        -e "s|^#?\s*LogFile:.*|LogFile: \"/var/lib/marzban/log/access.log\"|" \
-        -e "s|^#?\s*BlockDuration:.*|BlockDuration: 11|" \
+        -e "s|^#\?\s*AdminChatID:.*$|AdminChatID: \"${ADMIN_ID}\"|" \
+        -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_TORRENT}\"|" \
+        -e "s|^#\?\s*LogFile:.*$|LogFile: \"/var/lib/marzban/log/access.log\"|" \
+        -e "s|^#\?\s*BlockDuration:.*$|BlockDuration: 1|" \
         /opt/torrent-blocker/config.yaml
 
     # Скачивание базы данных
@@ -1007,12 +1019,16 @@ ssh_setup() {
     out_data " $(text 53)" "ssh-copy-id -p 22 ${USERNAME}@${IP4}"
     echo
     while true; do
-        reading " $(text 54) " answer_ssh
-        case "${answer_ssh,,}" in
+        reading " $(text 54) " ANSWER_SSH
+        case "${ANSWER_SSH,,}" in
             y)  ;;
-            *)
+            n)
                 warning " $(text 9) "
-                return 0;
+                return 0
+                ;;
+            *)
+                echo "Пожалуйста, введите 'y' для продолжения или 'n' для выхода."
+                continue  # Запрашиваем ввод снова, если введено что-то неверное
                 ;;
         esac
         
@@ -1086,7 +1102,6 @@ data_output() {
     out_data " $(text 59) " "https://${DOMAIN}/${WEBBASEPATH}/"
     if [[ $choise = "1" ]]; then
         out_data " $(text 61) " "https://${DOMAIN}/${ADGUARDPATH}/login.html"
-        
     fi
     echo
     out_data " $(text 62) " "ssh -p 22 ${USERNAME}@${IP4}"
@@ -1149,24 +1164,6 @@ main_script_repeat() {
 main_choise() {
     log_entry
     select_language
-
-    ENABLE_BOT="false"
-    ENABLE_WARP="false"
-    
-    for flag in "$@"; do
-        case $flag in
-            -bot)  # если передан флаг -bot
-                ENABLE_BOT="true"
-                ;;
-            -warp)  # если передан флаг -warp
-                ENABLE_WARP="true"
-                ;;
-            *)
-                echo "Неизвестный флаг: $flag"
-                ;;
-        esac
-    done
-    
     if [ -f /usr/local/marz-rp/reinstallation_check ]; then
         info " $(text 4) "
         sleep 2
@@ -1176,4 +1173,4 @@ main_choise() {
     fi
 }
 
-main_choise "$@"
+main_choise
