@@ -1,0 +1,152 @@
+# Функция для выбора использования бота
+choise_bot() {
+    # Если передан флаг -bot, выбираем бота автоматически
+    if [[ "$1" == "-bot" ]]; then
+        echo "Бот включен."
+        ENABLE_BOT="true"
+    else
+        # Если флаг не передан, предлагаем выбор
+        echo "Хотите использовать бота?"
+        echo "1) Да, включить бота"
+        echo "2) Нет, не использовать бота"
+        
+        # Цифровой выбор пользователя
+        read -p "Введите цифру (1 или 2): " choice
+
+        case $choice in
+            1)
+                echo "Бот включен."
+                ENABLE_BOT="true"
+                ;;
+            2)
+                echo "Бот не будет использоваться."
+                ENABLE_BOT="false"
+                ;;
+            *)
+                echo "Неверный выбор. Бот не будет включен."
+                ENABLE_BOT="false"
+                ;;
+        esac
+    fi
+
+    # Если бот включен, запрашиваем данные
+    if [[ "$ENABLE_BOT" == "true" ]]; then
+        reading " $(text 35) " ADMIN_ID
+        echo
+        reading " $(text 34) " BOT_TOKEN_PANEL
+        echo
+        reading " $(text 67) " BOT_TOKEN_BAN_TORRENT
+        tilda "$(text 10)"
+    fi
+}
+
+# Функция для выбора DNS-сервера
+choise_dns() {
+    # Если передан флаг -adh или -sysres, выбор DNS не требуется
+    if [[ "$1" == "-adh" ]]; then
+        echo "Выбран AdGuard Home."
+        DNS_SERVER="AdGuard Home"
+    elif [[ "$1" == "-sysres" ]]; then
+        echo "Выбран systemd-resolved."
+        DNS_SERVER="systemd-resolved"
+    else
+        # Если флаг не передан, предлагаем выбор
+        echo "Выберите DNS сервер:"
+        echo "1) systemd-resolved"
+        echo "2) AdGuard Home"
+        
+        # Цифровой выбор пользователя
+        read -p "Введите цифру (1 или 2): " choice
+
+        case $choice in
+            1)
+                echo "Выбран systemd-resolved."
+                DNS_SERVER="systemd-resolved"
+                ;;
+            2)
+                echo "Выбран AdGuard Home."
+                DNS_SERVER="AdGuard Home"
+                ;;
+            *)
+                echo "Неверный выбор. Используется systemd-resolved по умолчанию."
+                DNS_SERVER="systemd-resolved"
+                ;;
+        esac
+    fi
+}
+
+# Модификация data_entry для учета выбора бота и DNS
+data_entry() {
+    tilda "$(text 10)"
+    reading " $(text 11) " USERNAME
+    echo
+    reading " $(text 12) " PASSWORD
+    tilda "$(text 10)"
+    check_cf_token
+    tilda "$(text 10)"
+    reading " $(text 60) " SECRET_PASSWORD
+    echo
+    reading " $(text 19) " REALITY
+    tilda "$(text 10)"
+    validate_path "CDNGRPC"
+    echo
+    validate_path "CDNSPLIT"
+    echo
+    validate_path "CDNHTTPU"
+    echo
+    validate_path "CDNWS"
+    echo
+    validate_path "METRICS"
+    tilda "$(text 10)"
+    
+    # Выбор DNS-сервера и передача флага, если он есть
+    choise_dns "$1"  # передаем флаг для DNS
+    
+    # Выбор использования бота и передача флага, если он есть
+    choise_bot "$2"  # передаем флаг для бота
+    
+    validate_path WEBBASEPATH
+    echo
+    validate_path SUBPATH
+    tilda "$(text 10)"
+
+    WEBCERTFILE=/etc/letsencrypt/live/${DOMAIN}/fullchain.pem
+    WEBKEYFILE=/etc/letsencrypt/live/${DOMAIN}/privkey.pem
+    SUBURI=https://${DOMAIN}/${SUBPATH}/
+    SUBJSONURI=https://${DOMAIN}/${SUBJSONPATH}/
+}
+
+# Модификация main_choise для удаления WARP
+main_choise() {
+    log_entry
+    select_language
+
+    ENABLE_BOT="false"
+    
+    for flag in "$@"; do
+        case $flag in
+            -bot)  # если передан флаг -bot
+                ENABLE_BOT="true"
+                ;;
+            -adh)  # если передан флаг -adh
+                DNS_FLAG="-adh"
+                ;;
+            -sysres)  # если передан флаг -sysres
+                DNS_FLAG="-sysres"
+                ;;
+            *)
+                echo "Неизвестный флаг: $flag"
+                ;;
+        esac
+    done
+    
+    if [ -f /usr/local/marz-rp/reinstallation_check ]; then
+        info " $(text 4) "
+        sleep 2
+        main_script_repeat
+    else
+        main_script_first
+    fi
+}
+
+main_choise "$@"
