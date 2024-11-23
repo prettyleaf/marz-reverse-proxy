@@ -1,0 +1,17 @@
+{
+  "BOT_TOKEN": "",
+  "ADMINS": [],
+  "PANEL_DOMAIN": "",
+  "PANEL_USERNAME": "",
+  "PANEL_PASSWORD": "",
+  "GENERAL_LIMIT": 3,
+  "CHECK_INTERVAL": 240,
+  "TIME_TO_ACTIVE_USERS": 120,
+  "IP_LOCATION": "RU",
+  "EXCEPT_USERS": [
+    "user"
+  ],
+  "SPECIAL_LIMIT": {
+    "usertest": 2
+  }
+}
