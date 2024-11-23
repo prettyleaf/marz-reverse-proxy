@@ -999,7 +999,7 @@ marz_bot_install() {
     jq \
         --arg bot_token "$BOT_TOKEN_BAN_LIMIT_OR_TORRENT" \
         --arg admin "$ADMIN_ID" \
-        --arg domain "$DOMAIN" \
+        --arg domain "$DOMAIN:443" \
         --arg username "$USERNAME" \
         --arg password "$PASSWORD" \
         '.BOT_TOKEN = $bot_token |
