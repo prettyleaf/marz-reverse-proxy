@@ -14,8 +14,8 @@ reading()    { read -rp " $(question "$1")" "$2"; }
 text()       { eval echo "\${${L}[$*]}"; }
 text_eval()  { eval echo "\$(eval echo "\${${L}[$*]}")"; }
 
-E[0]="Language:\n  1.English (default) \n  2.Русский"
-R[0]="Язык:\n  1.English (по умолчанию) \n  2.Русский"
+E[0]="Language:\n  1. English (default) \n  2. Русский"
+R[0]="Язык:\n  1. English (по умолчанию) \n  2. Русский"
 E[1]="Choose:"
 R[1]="Выбери:"
 E[2]="Error: this script requires superuser (root) privileges to run."
@@ -154,6 +154,8 @@ E[67]="Enter the Telegram bot token for torrent block notifications:"
 R[67]="Введите токен Telegram бота для уведомлений о блокировке торрентов:"
 E[68]="Set up the Telegram bot? [y/N]:"
 R[68]="Настроить telegram бота? [y/N]:"
+E[69]="Bot:\n  1. IP limit (default) \n  2. Torrent ban"
+R[69]="Бот:\n  1. IP limit (по умолчанию) \n  2. Torrent ban"
 
 log_entry() {
     mkdir -p /usr/local/marz-rp/
@@ -433,6 +435,8 @@ data_entry() {
     reading " $(text 68) " ENABLE_BOT_CHOISE
     if [[ -z "$ENABLE_BOT_CHOISE" || "$ENABLE_BOT_CHOISE" =~ ^[Yy]$ ]]; then
         echo
+        hint " $(text 69) \n" && reading " $(text 1) " BOT_CHOISE
+        echo
         reading " $(text 35) " ADMIN_ID
         echo
         reading " $(text 34) " BOT_TOKEN_PANEL
@@ -451,6 +455,7 @@ data_entry() {
 installation_of_utilities() {
     info " $(text 36) "
     apt-get update && apt-get upgrade -y && apt-get install -y \
+        jq \
         ufw \
         zip \
         wget \
@@ -869,8 +874,14 @@ server {
             grpc_pass grpc://127.0.0.1:\$fwdport\$is_args\$args;
             break;
         }
-        proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
-        break;
+        if (\$http_upgrade ~* "(WEBSOCKET|WS)") {
+            proxy_pass https://127.0.0.1:\$fwdport\$is_args\$args;
+            break;
+            }
+        if (\$request_method ~* ^(PUT|POST|GET)\$) {
+            proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
+            break;
+        }
     }
     # Adguard home
     ${COMMENT_AGH}
@@ -978,20 +989,62 @@ EOF
     done
 }
 
+marz_bot_install() {    
+    # IP_LIMIT
+    while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/config/iplimit_config.json; do
+        warning " $(text 38) "
+        sleep 3
+    done
+
+    jq \
+        --arg bot_token "$BOT_TOKEN_BAN_LIMIT_OR_TORRENT" \
+        --arg admin "$ADMIN_ID" \
+        --arg domain "$DOMAIN" \
+        --arg username "$USERNAME" \
+        --arg password "$PASSWORD" \
+        '.BOT_TOKEN = $bot_token |
+         .ADMINS = [$admin] |
+         .PANEL_DOMAIN = $domain |
+         .PANEL_USERNAME = $username |
+         .PANEL_PASSWORD = $password' \
+        iplimit_config.json > config.json
+
+    rm -rf iplimit_config.*
+    echo -e "1\n7" | bash <(curl -sSL https://houshmand-2005.github.io/v2iplimit.sh)
+
+    #TORRENT_BAN
+    mkdir -p /var/lib/marzban/log/
+    echo -e '\n\n' | bash <(curl -fsSL git.new/install)
+
+    sed -i \
+        -e "s|^#\?\s*AdminChatID:.*$|AdminChatID: \"${ADMIN_ID}\"|" \
+        -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_LIMIT_OR_TORRENT}\"|" \
+        -e "s|^#\?\s*LogFile:.*$|LogFile: \"/var/lib/marzban/log/access.log\"|" \
+        -e "s|^#\?\s*BlockDuration:.*$|BlockDuration: 1|" \
+        /opt/torrent-blocker/config.yaml
+
+    if [[ "$BOT_CHOISE" == "2" ]]; then
+        jq '(.log) = {
+          "access": "/var/lib/marzban/log/access.log",
+          "error": "/var/lib/marzban/log/error.log",
+          "loglevel": "error",
+          "dnsLog": false
+        }' xray_config.json > tmp.json && mv tmp.json xray_config.json
+    fi
+}
+
 ### Установка Marzban ###
 panel_installation() {
     info " $(text 46) "
     cd ~/
     DB_PATH="/var/lib/marzban/db.sqlite3"
     mkdir -p /usr/local/marz-rp/
-    mkdir -p /var/lib/marzban/log/
     touch /usr/local/marz-rp/reinstallation_check
     NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
     HASHED_PASSWORD=$(htpasswd -nbBC 12 "" "${PASSWORD}" | cut -d ':' -f 2)
 
     # Установка и остановка Marzban
     timeout 110 bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
-    echo -e '\n\n' | bash <(curl -fsSL git.new/install)
     read PRIVATE_KEY0 PUBLIC_KEY0 <<< "$(generate_keys)"
     read PRIVATE_KEY1 PUBLIC_KEY1 <<< "$(generate_keys)"
     marzban down
@@ -1013,6 +1066,7 @@ EOF
         -e "s|^#\?\s*SUBSCRIPTION_PAGE_TEMPLATE.*$|SUBSCRIPTION_PAGE_TEMPLATE = \"subscription/index.html\"|" \
         -e "s|^#\?\s*TELEGRAM_API_TOKEN.*$|TELEGRAM_API_TOKEN = \"${BOT_TOKEN_PANEL}\"|" \
         -e "s|^#\?\s*TELEGRAM_ADMIN_ID.*$|TELEGRAM_ADMIN_ID = \"${ADMIN_ID}\"|" \
+        -e "s|^#\?\s*LOGIN_NOTIFY_WHITE_LIST.*$|LOGIN_NOTIFY_WHITE_LIST = \'127.0.0.1\'|" \
         /opt/marzban/.env
 
     # Скачивание и распаковка xray конфига
@@ -1032,19 +1086,14 @@ EOF
         -e "s|TEMP_REALITY|$REALITY|g" \
         -e "s|TEMP_PRIVATEKEY0|$PRIVATE_KEY0|g" \
         -e "s|TEMP_PRIVATEKEY1|$PRIVATE_KEY1|g" \
-        /root/xray_config.json
+        xray_config.json
+
+    marz_bot_install
 
     rm -rf /var/lib/marzban/xray_config.json.*
     mv /var/lib/marzban/xray_config.json /var/lib/marzban/xray_config.json.back
-    mv /root/xray_config.json /var/lib/marzban/xray_config.json
-    rm -rf /root/xray_config*
-
-    sed -i \
-        -e "s|^#\?\s*AdminChatID:.*$|AdminChatID: \"${ADMIN_ID}\"|" \
-        -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_LIMIT_OR_TORRENT}\"|" \
-        -e "s|^#\?\s*LogFile:.*$|LogFile: \"/var/lib/marzban/log/access.log\"|" \
-        -e "s|^#\?\s*BlockDuration:.*$|BlockDuration: 1|" \
-        /opt/torrent-blocker/config.yaml
+    mv xray_config.json /var/lib/marzban/xray_config.json
+    rm -rf xray_config*
 
     # Скачивание базы данных
     while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/database/db.sqlite3; do
