@@ -255,18 +255,15 @@ validate_input() {
 
 # Функция для обрезки домена (удаление http://, https:// и www)
 crop_domain() {
-    local input_value="$1"   # Считываем переданный домен или reality
-    local temp_value          # Временная переменная для обработки
-
+    local input_value="$1"
+    local temp_value
     # Удаление префиксов и www
     temp_value=$(echo "$input_value" | sed -e 's|https\?://||' -e 's|^www\.||' -e 's|/.*$||')
-
     # Проверка формата домена
     if ! [[ "$temp_value" =~ ^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$ ]]; then
         echo "Ошибка: введённый адрес '$temp_value' имеет неверный формат."
         return 1
     fi
-
     # Возвращаем обработанный домен
     echo "$temp_value"
     return 0
@@ -459,6 +456,7 @@ installation_of_utilities() {
         wget \
         sudo \
         curl \
+        screen \
         gnupg2 \
         sqlite3 \
         certbot \
