@@ -440,7 +440,7 @@ data_entry() {
         echo
         reading " $(text 34) " BOT_TOKEN_PANEL
         echo
-        reading " $(text 67) " BOT_TOKEN_BAN_TORRENT
+        reading " $(text 67) " BOT_TOKEN_BAN_LIMIT_OR_TORRENT
     fi
     tilda "$(text 10)"
 
@@ -871,14 +871,8 @@ server {
             grpc_pass grpc://127.0.0.1:\$fwdport\$is_args\$args;
             break;
         }
-        if (\$http_upgrade ~* "(WEBSOCKET|WS)") {
-            proxy_pass https://127.0.0.1:\$fwdport\$is_args\$args;
-            break;
-            }
-        if (\$request_method ~* ^(PUT|POST|GET)\$) {
-            proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
-            break;
-        }
+        proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
+        break;
     }
     # Adguard home
     ${COMMENT_AGH}
@@ -1049,7 +1043,7 @@ EOF
 
     sed -i \
         -e "s|^#\?\s*AdminChatID:.*$|AdminChatID: \"${ADMIN_ID}\"|" \
-        -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_TORRENT}\"|" \
+        -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_LIMIT_OR_TORRENT}\"|" \
         -e "s|^#\?\s*LogFile:.*$|LogFile: \"/var/lib/marzban/log/access.log\"|" \
         -e "s|^#\?\s*BlockDuration:.*$|BlockDuration: 1|" \
         /opt/torrent-blocker/config.yaml
