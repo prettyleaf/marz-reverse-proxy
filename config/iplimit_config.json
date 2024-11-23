@@ -12,6 +12,8 @@
     "user"
   ],
   "SPECIAL_LIMIT": {
-    "usertest": 2
+    "user0": 2,
+    "user1": 2,
+    "user2": 2
   }
 }
