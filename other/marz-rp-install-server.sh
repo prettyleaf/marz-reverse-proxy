@@ -150,8 +150,8 @@ E[66]="Prometheus monitor."
 R[66]="Мониторинг Prometheus."
 E[66]="Prometheus monitor."
 R[66]="Мониторинг Prometheus."
-E[67]="Enter the Telegram bot token for torrent block notifications:"
-R[67]="Введите токен Telegram бота для уведомлений о блокировке торрентов:"
+E[67]="Enter the Telegram bot token for IP limit, Torrent ban:"
+R[67]="Введите токен Telegram бота для IP limit, Torrent ban:"
 E[68]="Set up the Telegram bot? [y/N]:"
 R[68]="Настроить telegram бота? [y/N]:"
 E[69]="Bot:\n  1. IP limit (default) \n  2. Torrent ban"
@@ -386,13 +386,13 @@ choise_dns () {
         hint " $(text 31) \n" && reading " $(text 1) " CHOISE
         case $CHOISE in 
             1)
-                tilda "$(text 10)"
                 info " $(text 32)"
+                tilda "$(text 10)"
                 break
                 ;;
             2)
-                tilda "$(text 10)"
                 info " $(text 25)"
+                tilda "$(text 10)"
                 validate_path ADGUARDPATH
                 echo
                 break
@@ -1010,7 +1010,7 @@ marz_bot_install() {
         iplimit_config.json > config.json
 
     rm -rf iplimit_config.*
-    echo -e "1\n7" | bash <(curl -sSL https://houshmand-2005.github.io/v2iplimit.sh)
+    echo -e "1\n2\n1\n7" | bash <(curl -sSL https://houshmand-2005.github.io/v2iplimit.sh)
 
     #TORRENT_BAN
     mkdir -p /var/lib/marzban/log/
