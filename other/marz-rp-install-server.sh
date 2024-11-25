@@ -1120,6 +1120,7 @@ enabling_security() {
 ### SSH ####
 ssh_setup() {
     exec > /dev/tty 2>&1
+    disable_input
     info " $(text 48) "
     out_data " $(text 49) "
     echo
