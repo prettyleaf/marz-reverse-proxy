@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# export DEBIAN_FRONTEND=noninteractive
+#export DEBIAN_FRONTEND=noninteractive
 
 ### INFO ###
 out_data()   { echo -e "\e[1;33m$1\033[0m \033[1;37m$2\033[0m"; }
@@ -178,6 +178,16 @@ select_language() {
   esac
 }
 
+disable_input() {
+    stty -icanon min 1
+}
+
+# Функция для включения каноничного режима и очищения буфера ввода
+enable_input() {
+    stty icanon
+    cat < /dev/null
+}
+
 ### Проверка рута ###
 check_root() {
     if [[ $EUID -ne 0 ]]; then
@@ -221,38 +231,13 @@ start_installation() {
     info " $(text 6) "
     warning " apt-get update && apt-get full-upgrade -y && reboot "
     echo
-    reading " $(text 8) " ANSWER
-    case "${ANSWER,,}" in
+    reading " $(text 8) " ANSWER_START
+    case "${ANSWER_START,,}" in
         y)  ;;
         *)
             error " $(text 9) "
             ;;
     esac
-}
-
-get_test_response() {
-    testdomain=$(echo "${DOMAIN}" | rev | cut -d '.' -f 1-2 | rev)
-
-    if [[ "$CFTOKEN" =~ [A-Z] ]]; then
-        test_response=$(curl --silent --request GET --url https://api.cloudflare.com/client/v4/zones --header "Authorization: Bearer ${CFTOKEN}" --header "Content-Type: application/json")
-    else
-        test_response=$(curl --silent --request GET --url https://api.cloudflare.com/client/v4/zones --header "X-Auth-Key: ${CFTOKEN}" --header "X-Auth-Email: ${EMAIL}" --header "Content-Type: application/json")
-    fi
-}
-
-# Функция для проверки правильности ответа от API Cloudflare
-validate_input() {
-    get_test_response
-
-    # Проверка, содержит ли ответ нужные данные
-    if [[ "$test_response" =~ "\"${testdomain}\"" && \
-          "$test_response" =~ "\"#dns_records:edit\"" && \
-          "$test_response" =~ "\"#dns_records:read\"" && \
-          "$test_response" =~ "\"#zone:read\"" ]]; then
-        return 0
-    else
-        return 1
-    fi
 }
 
 # Функция для обрезки домена (удаление http://, https:// и www)
@@ -271,8 +256,22 @@ crop_domain() {
     return 0
 }
 
+# Запрос и ответ от API Cloudflare
+get_test_response() {
+    testdomain=$(echo "${DOMAIN}" | rev | cut -d '.' -f 1-2 | rev)
+
+    if [[ "$CFTOKEN" =~ [A-Z] ]]; then
+        test_response=$(curl --silent --request GET --url https://api.cloudflare.com/client/v4/zones --header "Authorization: Bearer ${CFTOKEN}" --header "Content-Type: application/json")
+    else
+        test_response=$(curl --silent --request GET --url https://api.cloudflare.com/client/v4/zones --header "X-Auth-Key: ${CFTOKEN}" --header "X-Auth-Email: ${EMAIL}" --header "Content-Type: application/json")
+    fi
+}
+
 check_cf_token() {
-    while true; do
+    while [[ -z $(echo $test_response | grep "\"${testdomain}\"") ]] || [[ -z $(echo $test_response | grep "\"#dns_records:edit\"") ]] || [[ -z $(echo $test_response | grep "\"#dns_records:read\"") ]] || [[ -z $(echo $test_response | grep "\"#zone:read\"") ]]; do
+        DOMAIN=""
+        EMAIL=""
+        CFTOKEN=""
         while [[ -z $DOMAIN ]]; do
             reading " $(text 13) " DOMAIN
             echo
@@ -294,17 +293,8 @@ check_cf_token() {
             reading " $(text 16) " CFTOKEN
             echo
         done
-
+        get_test_response
         info " $(text 17) "
-
-        if validate_input; then
-            break
-        else
-            warning " $(text 18)"
-            DOMAIN=""
-            EMAIL=""
-            CFTOKEN=""
-        fi
     done
 }
 
@@ -802,8 +792,6 @@ server {
     add_header X-XSS-Protection          "0" always;
     add_header X-Content-Type-Options    "nosniff" always;
     add_header Referrer-Policy           "no-referrer-when-downgrade" always;
-#    add_header Content-Security-Policy   "default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none';" always;
-#    add_header Content-Security-Policy   "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'self';" always;
     add_header Permissions-Policy        "interest-cohort=()" always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     add_header X-Frame-Options           "SAMEORIGIN";

@@ -14,8 +14,8 @@ reading()    { read -rp " $(question "$1")" "$2"; }
 text()       { eval echo "\${${L}[$*]}"; }
 text_eval()  { eval echo "\$(eval echo "\${${L}[$*]}")"; }
 
-E[0]="Language:\n  1.English (default) \n  2.Русский"
-R[0]="Язык:\n  1.English (по умолчанию) \n  2.Русский"
+E[0]="Language:\n  1. English (default) \n  2. Русский"
+R[0]="Язык:\n  1. English (по умолчанию) \n  2. Русский"
 E[1]="Choose:"
 R[1]="Выбери:"
 E[2]="Error: this script requires superuser (root) privileges to run."
@@ -150,10 +150,12 @@ E[66]="Prometheus monitor."
 R[66]="Мониторинг Prometheus."
 E[66]="Prometheus monitor."
 R[66]="Мониторинг Prometheus."
-E[67]="Enter the Telegram bot token for torrent block notifications:"
-R[67]="Введите токен Telegram бота для уведомлений о блокировке торрентов:"
+E[67]="Enter the Telegram bot token for IP limit, Torrent ban:"
+R[67]="Введите токен Telegram бота для IP limit, Torrent ban:"
 E[68]="Set up the Telegram bot? [y/N]:"
 R[68]="Настроить telegram бота? [y/N]:"
+E[69]="Bot:\n  1. IP limit (default) \n  2. Torrent ban"
+R[69]="Бот:\n  1. IP limit (по умолчанию) \n  2. Torrent ban"
 
 log_entry() {
     mkdir -p /usr/local/marz-rp/
@@ -174,6 +176,16 @@ select_language() {
 #    4) L=F ;;   # Если выбран персидский
     *) L=E ;;   # По умолчанию — английский
   esac
+}
+
+disable_input() {
+    stty -icanon min 1
+}
+
+# Функция для включения каноничного режима и очищения буфера ввода
+enable_input() {
+    stty icanon
+    cat < /dev/null
 }
 
 ### Проверка рута ###
@@ -219,38 +231,13 @@ start_installation() {
     info " $(text 6) "
     warning " apt-get update && apt-get full-upgrade -y && reboot "
     echo
-    reading " $(text 8) " ANSWER
-    case "${ANSWER,,}" in
+    reading " $(text 8) " ANSWER_START
+    case "${ANSWER_START,,}" in
         y)  ;;
         *)
             error " $(text 9) "
             ;;
     esac
-}
-
-get_test_response() {
-    testdomain=$(echo "${DOMAIN}" | rev | cut -d '.' -f 1-2 | rev)
-
-    if [[ "$CFTOKEN" =~ [A-Z] ]]; then
-        test_response=$(curl --silent --request GET --url https://api.cloudflare.com/client/v4/zones --header "Authorization: Bearer ${CFTOKEN}" --header "Content-Type: application/json")
-    else
-        test_response=$(curl --silent --request GET --url https://api.cloudflare.com/client/v4/zones --header "X-Auth-Key: ${CFTOKEN}" --header "X-Auth-Email: ${EMAIL}" --header "Content-Type: application/json")
-    fi
-}
-
-# Функция для проверки правильности ответа от API Cloudflare
-validate_input() {
-    get_test_response
-
-    # Проверка, содержит ли ответ нужные данные
-    if [[ "$test_response" =~ "\"${testdomain}\"" && \
-          "$test_response" =~ "\"#dns_records:edit\"" && \
-          "$test_response" =~ "\"#dns_records:read\"" && \
-          "$test_response" =~ "\"#zone:read\"" ]]; then
-        return 0
-    else
-        return 1
-    fi
 }
 
 # Функция для обрезки домена (удаление http://, https:// и www)
@@ -272,8 +259,22 @@ crop_domain() {
     return 0
 }
 
+# Запрос и ответ от API Cloudflare
+get_test_response() {
+    testdomain=$(echo "${DOMAIN}" | rev | cut -d '.' -f 1-2 | rev)
+
+    if [[ "$CFTOKEN" =~ [A-Z] ]]; then
+        test_response=$(curl --silent --request GET --url https://api.cloudflare.com/client/v4/zones --header "Authorization: Bearer ${CFTOKEN}" --header "Content-Type: application/json")
+    else
+        test_response=$(curl --silent --request GET --url https://api.cloudflare.com/client/v4/zones --header "X-Auth-Key: ${CFTOKEN}" --header "X-Auth-Email: ${EMAIL}" --header "Content-Type: application/json")
+    fi
+}
+
 check_cf_token() {
-    while true; do
+    while [[ -z $(echo $test_response | grep "\"${testdomain}\"") ]] || [[ -z $(echo $test_response | grep "\"#dns_records:edit\"") ]] || [[ -z $(echo $test_response | grep "\"#dns_records:read\"") ]] || [[ -z $(echo $test_response | grep "\"#zone:read\"") ]]; do
+        DOMAIN=""
+        EMAIL=""
+        CFTOKEN=""
         while [[ -z $DOMAIN ]]; do
             reading " $(text 13) " DOMAIN
             echo
@@ -281,7 +282,7 @@ check_cf_token() {
 
         DOMAIN=$(crop_domain "$DOMAIN")
         
-    if [[ $? -ne 0 ]]; then
+        if [[ $? -ne 0 ]]; then
             DOMAIN=""
             continue
         fi
@@ -295,17 +296,8 @@ check_cf_token() {
             reading " $(text 16) " CFTOKEN
             echo
         done
-
+        get_test_response
         info " $(text 17) "
-
-        if validate_input; then
-            break
-        else
-            warning " $(text 18)"
-            DOMAIN=""
-            EMAIL=""
-            CFTOKEN=""
-        fi
     done
 }
 
@@ -414,6 +406,20 @@ data_entry() {
     tilda "$(text 10)"
     check_cf_token
     tilda "$(text 10)"
+#    reading " $(text 60) " SECRET_PASSWORD
+#    echo
+#    reading " $(text 19) " REALITY
+#    tilda "$(text 10)"
+#    validate_path "CDNGRPC"
+#    echo
+#    validate_path "CDNSPLIT"
+#    echo
+#    validate_path "CDNHTTPU"
+#    echo
+#    validate_path "CDNWS"
+#    echo
+#    validate_path "METRICS"
+#    tilda "$(text 10)"
     choise_dns
     validate_path WEBBASEPATH
     echo
@@ -422,11 +428,13 @@ data_entry() {
     reading " $(text 68) " ENABLE_BOT_CHOISE
     if [[ -z "$ENABLE_BOT_CHOISE" || "$ENABLE_BOT_CHOISE" =~ ^[Yy]$ ]]; then
         echo
+        hint " $(text 69) \n" && reading " $(text 1) " BOT_CHOISE
+        echo
         reading " $(text 35) " ADMIN_ID
         echo
         reading " $(text 34) " BOT_TOKEN_PANEL
         echo
-        reading " $(text 67) " BOT_TOKEN_BAN_TORRENT
+        reading " $(text 67) " BOT_TOKEN_BAN_LIMIT_OR_TORRENT
     fi
     tilda "$(text 10)"
 
@@ -647,6 +655,7 @@ nginx_setup() {
     rm -rf /etc/nginx/conf.d/default.conf
     openssl dhparam -out /etc/nginx/dhparam.pem 2048
     touch /etc/nginx/.htpasswd
+#    htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
 
     nginx_conf
     stream_conf
@@ -676,6 +685,7 @@ http {
     log_format proxy '\$proxy_protocol_addr [\$time_local] '
                         '"\$request" \$status \$body_bytes_sent '
                         '"\$http_referer" "\$http_user_agent"';
+
     access_log                    /var/log/nginx/access.log proxy;
     sendfile                      on;
     tcp_nopush                    on;
@@ -715,6 +725,7 @@ stream_conf() {
 map \$ssl_preread_server_name \$backend {
     ${DOMAIN}                   web;
     www.${DOMAIN}               xtls;
+#    ${REALITY}                  reality;
     default                     block;
 }
 upstream block {
@@ -723,6 +734,9 @@ upstream block {
 upstream web {
     server 127.0.0.1:7443;
 }
+#upstream reality {
+#    server 127.0.0.1:8443;
+#}
 upstream xtls {
     server 127.0.0.1:9443;
 }
@@ -798,6 +812,42 @@ server {
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+    # Xray Config
+    location /${CDNSPLIT} {
+        proxy_pass http://127.0.0.1:2063;
+        proxy_http_version 1.1;
+        proxy_redirect off;
+    }
+    # Xray Config
+    location ~ ^/(?<fwdport>\d+)/(?<fwdpath>.*)\$ {
+        if (\$hack = 1) {return 404;}
+        client_max_body_size 0;
+        client_body_timeout 1d;
+        grpc_read_timeout 1d;
+        grpc_socket_keepalive on;
+        proxy_read_timeout 1d;
+        proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_socket_keepalive on;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        if (\$content_type ~* "GRPC") {
+            grpc_pass grpc://127.0.0.1:\$fwdport\$is_args\$args;
+            break;
+        }
+        if (\$http_upgrade ~* "(WEBSOCKET|WS)") {
+            proxy_pass https://127.0.0.1:\$fwdport\$is_args\$args;
+            break;
+            }
+        if (\$request_method ~* ^(PUT|POST|GET)\$) {
+            proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
+            break;
+        }
     }
     # Adguard home
     ${COMMENT_AGH}
@@ -905,13 +955,56 @@ EOF
     done
 }
 
+marz_bot_install() {    
+    # IP_LIMIT
+    while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/config/iplimit_config.json; do
+        warning " $(text 38) "
+        sleep 3
+    done
+
+    jq \
+        --arg bot_token "$BOT_TOKEN_BAN_LIMIT_OR_TORRENT" \
+        --arg admin "$ADMIN_ID" \
+        --arg domain "$DOMAIN:443" \
+        --arg username "$USERNAME" \
+        --arg password "$PASSWORD" \
+        '.BOT_TOKEN = $bot_token |
+         .ADMINS = [$admin] |
+         .PANEL_DOMAIN = $domain |
+         .PANEL_USERNAME = $username |
+         .PANEL_PASSWORD = $password' \
+        iplimit_config.json > config.json
+
+    rm -rf iplimit_config.*
+    echo -e "1\n2\n1\n7" | bash <(curl -sSL https://houshmand-2005.github.io/v2iplimit.sh)
+
+    #TORRENT_BAN
+    mkdir -p /var/lib/marzban/log/
+    echo -e '\n\n' | bash <(curl -fsSL git.new/install)
+
+    sed -i \
+        -e "s|^#\?\s*AdminChatID:.*$|AdminChatID: \"${ADMIN_ID}\"|" \
+        -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_LIMIT_OR_TORRENT}\"|" \
+        -e "s|^#\?\s*LogFile:.*$|LogFile: \"/var/lib/marzban/log/access.log\"|" \
+        -e "s|^#\?\s*BlockDuration:.*$|BlockDuration: 1|" \
+        /opt/torrent-blocker/config.yaml
+
+    if [[ "$BOT_CHOISE" == "2" ]]; then
+        jq '(.log) = {
+          "access": "/var/lib/marzban/log/access.log",
+          "error": "/var/lib/marzban/log/error.log",
+          "loglevel": "error",
+          "dnsLog": false
+        }' xray_config.json > tmp.json && mv tmp.json xray_config.json
+    fi
+}
+
 ### Установка Marzban ###
 panel_installation() {
     info " $(text 46) "
     cd ~/
     DB_PATH="/var/lib/marzban/db.sqlite3"
     mkdir -p /usr/local/marz-rp/
-    mkdir -p /var/lib/marzban/log/
     touch /usr/local/marz-rp/reinstallation_check
     NEW_UUID=$(cat /proc/sys/kernel/random/uuid)
     HASHED_PASSWORD=$(htpasswd -nbBC 12 "" "${PASSWORD}" | cut -d ':' -f 2)
@@ -940,6 +1033,7 @@ EOF
         -e "s|^#\?\s*SUBSCRIPTION_PAGE_TEMPLATE.*$|SUBSCRIPTION_PAGE_TEMPLATE = \"subscription/index.html\"|" \
         -e "s|^#\?\s*TELEGRAM_API_TOKEN.*$|TELEGRAM_API_TOKEN = \"${BOT_TOKEN_PANEL}\"|" \
         -e "s|^#\?\s*TELEGRAM_ADMIN_ID.*$|TELEGRAM_ADMIN_ID = \"${ADMIN_ID}\"|" \
+        -e "s|^#\?\s*LOGIN_NOTIFY_WHITE_LIST.*$|LOGIN_NOTIFY_WHITE_LIST = \'127.0.0.1\'|" \
         /opt/marzban/.env
 
     # Скачивание и распаковка xray конфига
@@ -953,20 +1047,14 @@ EOF
         -e "s|TEMP_DOMAIN|$DOMAIN|g" \
         -e "s|TEMP_PRIVATEKEY0|$PRIVATE_KEY0|g" \
         -e "s|TEMP_PRIVATEKEY1|$PRIVATE_KEY1|g" \
-        /root/xray_config.json
+        xray_config.json
+
+    marz_bot_install
 
     rm -rf /var/lib/marzban/xray_config.json.*
     mv /var/lib/marzban/xray_config.json /var/lib/marzban/xray_config.json.back
-    mv /root/xray_config.json /var/lib/marzban/xray_config.json
-    rm -rf /root/xray_config*
-
-#    bash <(curl -fsSL git.new/install)
-    sed -i \
-        -e "s|^#\?\s*AdminChatID:.*$|AdminChatID: \"${ADMIN_ID}\"|" \
-        -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_TORRENT}\"|" \
-        -e "s|^#\?\s*LogFile:.*$|LogFile: \"/var/lib/marzban/log/access.log\"|" \
-        -e "s|^#\?\s*BlockDuration:.*$|BlockDuration: 1|" \
-        /opt/torrent-blocker/config.yaml
+    mv xray_config.json /var/lib/marzban/xray_config.json
+    rm -rf xray_config*
 
     # Скачивание базы данных
     while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/database/db.sqlite3; do
