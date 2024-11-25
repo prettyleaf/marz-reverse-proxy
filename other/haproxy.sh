@@ -49,7 +49,7 @@ frontend haproxy-tls
         tcp-request content reject if host_ip
         tcp-request inspect-delay 5s
         tcp-request content accept if { req_ssl_hello_type 1 }
-        ${comment3}use_backend http-sub if { path /${subspath} } || { path_beg /${subspath}/ }
+        use_backend http-sub if { path /${subspath} } || { path_beg /${subspath}/ }
         use_backend %[lua.trojan_auth]
         default_backend http
 
@@ -61,16 +61,16 @@ backend trojan
 backend http
         mode http
         timeout server 1h
-        ${comment2}${comment3}http-request auth unless { http_auth(mycredentials) }
-        ${comment1}${comment3}http-request redirect code 301 location https://${redirect}/
-        ${comment1}${comment2}server nginx 127.0.0.1:11443
+        http-request auth unless { http_auth(mycredentials) }
+        http-request redirect code 301 location https://${redirect}/
+        server nginx 127.0.0.1:11443
 
-${comment3}backend http-sub
-        ${comment3}mode http
-        ${comment3}timeout server 1h
-        ${comment3}server nginx 127.0.0.1:11443
+backend http-sub
+        mode http
+        timeout server 1h
+        server nginx 127.0.0.1:11443
 
-${comment2}${comment3}userlist mycredentials
+userlist mycredentials
 EOF
 
 systemctl enable haproxy.service
