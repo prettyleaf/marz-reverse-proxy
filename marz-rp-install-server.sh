@@ -633,18 +633,42 @@ warp() {
 issuance_of_certificates() {
     info " $(text 44) "
     touch cloudflare.credentials
+    CF_CREDENTIALS_PATH="/root/cloudflare.credentials"
     chown root:root cloudflare.credentials
     chmod 600 cloudflare.credentials
+
     if [[ "$CFTOKEN" =~ [A-Z] ]]
     then
-        echo "dns_cloudflare_api_token = ${CFTOKEN}" >> /root/cloudflare.credentials
+        echo "dns_cloudflare_api_token = ${CFTOKEN}" >> ${CF_CREDENTIALS_PATH}
     else
-        echo "dns_cloudflare_email = ${EMAIL}" >> /root/cloudflare.credentials
-        echo "dns_cloudflare_api_key = ${CFTOKEN}" >> /root/cloudflare.credentials
+        echo "dns_cloudflare_email = ${EMAIL}" >> ${CF_CREDENTIALS_PATH}
+        echo "dns_cloudflare_api_key = ${CFTOKEN}" >> ${CF_CREDENTIALS_PATH}
     fi
-    certbot certonly --dns-cloudflare --dns-cloudflare-credentials /root/cloudflare.credentials --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
+
+    while true; do
+        certbot certonly --dns-cloudflare --dns-cloudflare-credentials ${CF_CREDENTIALS_PATH} --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
+
+        if [ $? -eq 0 ]; then
+            break
+        else
+            sleep 5
+        fi
+    done
+
     { crontab -l; echo "0 5 1 */2 * certbot -q renew"; } | crontab -
-    echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
+
+    nginx_or_haproxy=1
+    if [[ "${nginx_or_haproxy}" == "1" ]]
+    then
+        echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${domain}.conf
+        echo ""
+        openssl dhparam -out /etc/nginx/dhparam.pem 2048
+    else
+        echo "renew_hook = cat /etc/letsencrypt/live/${domain}/fullchain.pem /etc/letsencrypt/live/${domain}/privkey.pem > /etc/haproxy/certs/${domain}.pem && systemctl restart haproxy" >> /etc/letsencrypt/renewal/${domain}.conf
+        echo ""
+        openssl dhparam -out /etc/haproxy/dhparam.pem 2048
+    fi
+    
     tilda "$(text 10)"
 }
 
@@ -653,7 +677,6 @@ nginx_setup() {
     info " $(text 45) "
     mkdir -p /etc/nginx/stream-enabled/
     rm -rf /etc/nginx/conf.d/default.conf
-    openssl dhparam -out /etc/nginx/dhparam.pem 2048
     touch /etc/nginx/.htpasswd
 #    htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
 

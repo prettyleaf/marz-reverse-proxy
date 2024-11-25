@@ -648,18 +648,26 @@ issuance_of_certificates() {
         certbot certonly --dns-cloudflare --dns-cloudflare-credentials ${CF_CREDENTIALS_PATH} --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
 
         if [ $? -eq 0 ]; then
-            echo "Сертификат успешно получен!"
-            break  # Выход из цикла, если команда прошла успешно
+            break
         else
-            echo "Ошибка при получении сертификата. Повторяем попытку..."
-            sleep 5  # Задержка между попытками
+            sleep 5
         fi
     done
 
-    certbot certonly --dns-cloudflare --dns-cloudflare-credentials ${CF_CREDENTIALS_PATH} --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
-    
     { crontab -l; echo "0 5 1 */2 * certbot -q renew"; } | crontab -
-    echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
+
+    nginx_or_haproxy=1
+    if [[ "${nginx_or_haproxy}" == "1" ]]
+    then
+        echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${domain}.conf
+        echo ""
+        openssl dhparam -out /etc/nginx/dhparam.pem 2048
+    else
+        echo "renew_hook = cat /etc/letsencrypt/live/${domain}/fullchain.pem /etc/letsencrypt/live/${domain}/privkey.pem > /etc/haproxy/certs/${domain}.pem && systemctl restart haproxy" >> /etc/letsencrypt/renewal/${domain}.conf
+        echo ""
+        openssl dhparam -out /etc/haproxy/dhparam.pem 2048
+    fi
+    
     tilda "$(text 10)"
 }
 
@@ -675,7 +683,6 @@ nginx_setup() {
     info " $(text 45) "
     mkdir -p /etc/nginx/stream-enabled/
     rm -rf /etc/nginx/conf.d/default.conf
-    openssl dhparam -out /etc/nginx/dhparam.pem 2048
     touch /etc/nginx/.htpasswd
     htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
 
