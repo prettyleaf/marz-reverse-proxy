@@ -1102,20 +1102,9 @@ ssh_setup() {
     out_data " $(text 52)" "type \$env:USERPROFILE\.ssh\id_rsa.pub | ssh -p 22 ${USERNAME}@${IP4} \"cat >> ~/.ssh/authorized_keys\""
     out_data " $(text 53)" "ssh-copy-id -p 22 ${USERNAME}@${IP4}"
     echo
-    while true; do
-        reading " $(text 54) " ANSWER_SSH
-        case "${ANSWER_SSH,,}" in
-            y)  ;;
-            n)
-                warning " $(text 9) "
-                return 0
-                ;;
-            *)
-                echo "Пожалуйста, введите 'y' для продолжения или 'n' для выхода."
-                continue  # Запрашиваем ввод снова, если введено что-то неверное
-                ;;
-        esac
-        
+    reading " $(text 54) " ANSWER_SSH
+    if [[ "${ANSWER_SSH}" == [yY] ]]; then
+    
         # Проверяем наличие SSH-ключей
         if [[ ! -s "/home/${USERNAME}/.ssh/id_rsa.pub" && ! -s "/root/.ssh/id_rsa.pub" ]]; then
             warning " $(text 55) "
@@ -1173,8 +1162,10 @@ to the fullest extent of the law.
 
 EOF
         systemctl restart ssh.service
-        break
-    done
+    else
+        warning " $(text 9) "
+        return 0
+    fi
 }
 
 ### Окончание ###

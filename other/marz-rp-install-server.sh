@@ -632,16 +632,32 @@ warp() {
 issuance_of_certificates() {
     info " $(text 44) "
     touch cloudflare.credentials
+    CF_CREDENTIALS_PATH="/root/cloudflare.credentials"
     chown root:root cloudflare.credentials
     chmod 600 cloudflare.credentials
+
     if [[ "$CFTOKEN" =~ [A-Z] ]]
     then
-        echo "dns_cloudflare_api_token = ${CFTOKEN}" >> /root/cloudflare.credentials
+        echo "dns_cloudflare_api_token = ${CFTOKEN}" >> ${CF_CREDENTIALS_PATH}
     else
-        echo "dns_cloudflare_email = ${EMAIL}" >> /root/cloudflare.credentials
-        echo "dns_cloudflare_api_key = ${CFTOKEN}" >> /root/cloudflare.credentials
+        echo "dns_cloudflare_email = ${EMAIL}" >> ${CF_CREDENTIALS_PATH}
+        echo "dns_cloudflare_api_key = ${CFTOKEN}" >> ${CF_CREDENTIALS_PATH}
     fi
-    certbot certonly --dns-cloudflare --dns-cloudflare-credentials /root/cloudflare.credentials --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
+
+    while true; do
+        certbot certonly --dns-cloudflare --dns-cloudflare-credentials ${CF_CREDENTIALS_PATH} --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
+
+        if [ $? -eq 0 ]; then
+            echo "Сертификат успешно получен!"
+            break  # Выход из цикла, если команда прошла успешно
+        else
+            echo "Ошибка при получении сертификата. Повторяем попытку..."
+            sleep 5  # Задержка между попытками
+        fi
+    done
+
+    certbot certonly --dns-cloudflare --dns-cloudflare-credentials ${CF_CREDENTIALS_PATH} --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
+    
     { crontab -l; echo "0 5 1 */2 * certbot -q renew"; } | crontab -
     echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
     tilda "$(text 10)"
@@ -1130,20 +1146,9 @@ ssh_setup() {
     out_data " $(text 52)" "type \$env:USERPROFILE\.ssh\id_rsa.pub | ssh -p 22 ${USERNAME}@${IP4} \"cat >> ~/.ssh/authorized_keys\""
     out_data " $(text 53)" "ssh-copy-id -p 22 ${USERNAME}@${IP4}"
     echo
-    while true; do
-        reading " $(text 54) " ANSWER_SSH
-        case "${ANSWER_SSH,,}" in
-            y)  ;;
-            n)
-                warning " $(text 9) "
-                return 0
-                ;;
-            *)
-                echo "Пожалуйста, введите 'y' для продолжения или 'n' для выхода."
-                continue  # Запрашиваем ввод снова, если введено что-то неверное
-                ;;
-        esac
-        
+    reading " $(text 54) " ANSWER_SSH
+    if [[ "${ANSWER_SSH}" == [yY] ]]; then
+    
         # Проверяем наличие SSH-ключей
         if [[ ! -s "/home/${USERNAME}/.ssh/id_rsa.pub" && ! -s "/root/.ssh/id_rsa.pub" ]]; then
             warning " $(text 55) "
@@ -1203,8 +1208,10 @@ to the fullest extent of the law.
 
 EOF
         systemctl restart ssh.service
-        break
-    done
+    else
+        warning " $(text 9) "
+        return 0
+    fi
 }
 
 ### Окончание ###
