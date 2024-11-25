@@ -37,8 +37,9 @@
 1. Конфигурация сервера Xray с MARZBAN:
    - VLESS-TCP-XTLS-Vision и VLESS-TCP-REALITY (Steal from yourself).
    - Подключение подписки для автоматического обновления конфигураций.
-   - [Marzban custom subcription](https://github.com/x0sina/marzban-sub).
-   - [Marzban torrent blocker](https://github.com/kutovoys/marzban-torrent-blocker).
+   - [Пользовательская подписка](https://github.com/x0sina/marzban-sub).
+   - [Блокировщик торрентов](https://github.com/kutovoys/marzban-torrent-blocker).
+   - [Ограничение IP-адресов](https://github.com/houshmand-2005/V2IpLimit).
 2. Настройку обратного прокси NGINX на порт 443.
 3. Обеспечение безопасности:
    - Автоматические обновления системы через unattended-upgrades.
