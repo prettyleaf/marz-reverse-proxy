@@ -68,7 +68,7 @@ bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads
 
 The script will then prompt you for the necessary configuration information:
 
-<p align="center"><a href="#"><img src="./media/marz-rp-install.png" alt="Image"></a></p>
+<p align="center"><a href="#"><img src="./media/marz_rp_install.png" alt="Image"></a></p>
 
 ### Note: 
 - Once the configuration is complete, the script will display all the necessary links and login information for the MARZBAN administration panel.
