@@ -82,7 +82,7 @@ E[32]="Systemd-resolved selected."
 R[32]="Выбран systemd-resolved."
 E[33]="Error: invalid choice, please try again."
 R[33]="Ошибка: неверный выбор, попробуйте снова."
-R[34]="Enter the Telegram bot token for the control panel:"
+E[34]="Enter the Telegram bot token for the control panel:"
 R[34]="Введите токен Telegram бота для панели управления:"
 E[35]="Enter your Telegram ID:"
 R[35]="Введите ваш Telegram ID:"
@@ -124,10 +124,10 @@ E[53]="Command for Linux:"
 R[53]="Команда для Linux:"
 E[54]="Configure SSH (optional step)? [y/N]:"
 R[54]="Настроить SSH (необязательный шаг)? [y/N]:"
-E[55]="Error: keys not found in /home/${USERNAME}/.ssh/id_rsa.pub or /root/.ssh/id_rsa.pub"
-R[55]="Ошибка: ключи не найдены в файле /home/${USERNAME}/.ssh/id_rsa.pub или /root/.ssh/id_rsa.pub"
-E[56]="Create keys and add them to the server before retrying."
-R[56]="Создайте ключи и добавьте их на сервер, прежде чем повторить снова."
+E[55]="Error: Keys not found. Please add them to the server before retrying..."
+R[55]="Ошибка: ключи не найдены, добавьте его на сервер, прежде чем повторить..."
+E[56]="Key found, proceeding with SSH setup."
+R[56]="Ключ найден, настройка SSH."
 E[57]="Installing bot."
 R[57]="Установка бота."
 E[58]="SAVE THIS SCREEN!"
@@ -176,16 +176,6 @@ select_language() {
 #    4) L=F ;;   # Если выбран персидский
     *) L=E ;;   # По умолчанию — английский
   esac
-}
-
-disable_input() {
-    stty -icanon min 1
-}
-
-# Функция для включения каноничного режима и очищения буфера ввода
-enable_input() {
-    stty icanon
-    cat < /dev/null
 }
 
 ### Проверка рута ###
@@ -1128,7 +1118,6 @@ enabling_security() {
 ### SSH ####
 ssh_setup() {
     exec > /dev/tty 2>&1
-    disable_input
     info " $(text 48) "
     out_data " $(text 49) "
     echo
@@ -1136,18 +1125,26 @@ ssh_setup() {
     out_data " $(text 51) "
     echo
     out_data " $(text 52)" "type \$env:USERPROFILE\.ssh\id_rsa.pub | ssh -p 22 ${USERNAME}@${IP4} \"cat >> ~/.ssh/authorized_keys\""
-    out_data " $(text 53)" "ssh-copy-id -p 22 ${USERNAME}@${IP4}"
+    out_data " $(text 53)" "ssh-copy-iуd -p 22 ${USERNAME}@${IP4}"
     echo
+    while read -r -t 0.1 -n 1; do :; done
     reading " $(text 54) " ANSWER_SSH
     if [[ "${ANSWER_SSH}" == [yY] ]]; then
-    
-        # Проверяем наличие SSH-ключей
-        if [[ ! -s "/home/${USERNAME}/.ssh/id_rsa.pub" && ! -s "/root/.ssh/id_rsa.pub" ]]; then
-            warning " $(text 55) "
-            info " $(text 56) "
-            return 1 # Сообщаем о проблеме и выходим из функции
-        fi
-
+        # Цикл проверки наличия ключа
+        while true; do
+            if [[ -n $(grep -v '^[[:space:]]*$' "/home/${USERNAME}/.ssh/authorized_keys") || -n $(grep -v '^[[:space:]]*$' "/root/.ssh/authorized_keys") ]]; then
+                info " $(text 56) "
+                break
+            else
+                warning " $(text 55) "
+                echo
+                reading " $(text 54) " CONTINUE_SSH
+                if [[ "${CONTINUE_SSH}" != [yY] ]]; then
+                    warning " $(text 9) " # Настройка отменена
+                    return 0
+                fi
+            fi
+        done
         # Если ключ найден, продолжаем настройку SSH
         sed -i -e "
             s/#PermitRootLogin/PermitRootLogin/g;
