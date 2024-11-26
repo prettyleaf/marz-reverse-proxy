@@ -1163,7 +1163,8 @@ ssh_setup() {
                 break
             else
                 warning " $(text 55) "
-                reading " $(text 54) [y/n] " CONTINUE_SSH
+                echo
+                reading " $(text 54) " CONTINUE_SSH
                 if [[ "${CONTINUE_SSH}" != [yY] ]]; then
                     warning " $(text 9) " # Настройка отменена
                     return 0
