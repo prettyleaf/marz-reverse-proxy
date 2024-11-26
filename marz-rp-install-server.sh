@@ -1125,7 +1125,7 @@ ssh_setup() {
     out_data " $(text 51) "
     echo
     out_data " $(text 52)" "type \$env:USERPROFILE\.ssh\id_rsa.pub | ssh -p 22 ${USERNAME}@${IP4} \"cat >> ~/.ssh/authorized_keys\""
-    out_data " $(text 53)" "ssh-copy-iуd -p 22 ${USERNAME}@${IP4}"
+    out_data " $(text 53)" "ssh-copy-id -p 22 ${USERNAME}@${IP4}"
     echo
     while read -r -t 0.1 -n 1; do :; done
     reading " $(text 54) " ANSWER_SSH
