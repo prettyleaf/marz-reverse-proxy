@@ -124,10 +124,10 @@ E[53]="Command for Linux:"
 R[53]="Команда для Linux:"
 E[54]="Configure SSH (optional step)? [y/N]:"
 R[54]="Настроить SSH (необязательный шаг)? [y/N]:"
-E[55]="Error: keys not found in /home/${USERNAME}/.ssh/id_rsa.pub or /root/.ssh/id_rsa.pub"
-R[55]="Ошибка: ключи не найдены в файле /home/${USERNAME}/.ssh/id_rsa.pub или /root/.ssh/id_rsa.pub"
-E[56]="Create keys and add them to the server before retrying."
-R[56]="Создайте ключи и добавьте их на сервер, прежде чем повторить снова."
+E[55]="Error: Keys not found. Please add them to the server before retrying..."
+R[55]="Ошибка: ключи не найдены, добавьте его на сервер, прежде чем повторить..."
+E[56]="Key found, proceeding with SSH setup."
+R[56]="Ключ найден, настройка SSH."
 E[57]="Installing bot."
 R[57]="Установка бота."
 E[58]="SAVE THIS SCREEN!"
@@ -1162,18 +1162,24 @@ ssh_setup() {
     out_data " $(text 51) "
     echo
     out_data " $(text 52)" "type \$env:USERPROFILE\.ssh\id_rsa.pub | ssh -p 22 ${USERNAME}@${IP4} \"cat >> ~/.ssh/authorized_keys\""
-    out_data " $(text 53)" "ssh-copy-id -p 22 ${USERNAME}@${IP4}"
+    out_data " $(text 53)" "ssh-copy-iуd -p 22 ${USERNAME}@${IP4}"
     echo
     reading " $(text 54) " ANSWER_SSH
     if [[ "${ANSWER_SSH}" == [yY] ]]; then
-    
-        # Проверяем наличие SSH-ключей
-        if [[ ! -s "/home/${USERNAME}/.ssh/id_rsa.pub" && ! -s "/root/.ssh/id_rsa.pub" ]]; then
-            warning " $(text 55) "
-            info " $(text 56) "
-            return 1 # Сообщаем о проблеме и выходим из функции
-        fi
-
+        # Цикл проверки наличия ключа
+        while true; do
+            if [[ -s "/home/${USERNAME}/.ssh/authorized_keys" || -s "/root/.ssh/authorized_keys" ]]; then
+                info " $(text 56) "
+                break
+            else
+                warning " $(text 55) "
+                reading " $(text 54) [y/n] " CONTINUE_SSH
+                if [[ "${CONTINUE_SSH}" != [yY] ]]; then
+                    warning " $(text 9) " # Настройка отменена
+                    return 0
+                fi
+            fi
+        done
         # Если ключ найден, продолжаем настройку SSH
         sed -i -e "
             s/#Port/Port/g;
@@ -1187,7 +1193,7 @@ ssh_setup() {
             s/#PermitEmptyPasswords/PermitEmptyPasswords/g;
             s/PermitEmptyPasswords yes/PermitEmptyPasswords no/g;
         " /etc/ssh/sshd_config
-
+        
         # Настройка баннера
         cat > /etc/motd <<EOF
 
