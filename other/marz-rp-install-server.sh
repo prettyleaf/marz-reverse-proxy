@@ -178,16 +178,6 @@ select_language() {
   esac
 }
 
-disable_input() {
-    stty -icanon min 1
-}
-
-# Функция для включения каноничного режима и очищения буфера ввода
-enable_input() {
-    stty icanon
-    cat < /dev/null
-}
-
 ### Проверка рута ###
 check_root() {
     if [[ $EUID -ne 0 ]]; then
@@ -1154,7 +1144,6 @@ enabling_security() {
 ### SSH ####
 ssh_setup() {
     exec > /dev/tty 2>&1
-    disable_input
     info " $(text 48) "
     out_data " $(text 49) "
     echo
@@ -1164,6 +1153,7 @@ ssh_setup() {
     out_data " $(text 52)" "type \$env:USERPROFILE\.ssh\id_rsa.pub | ssh -p 22 ${USERNAME}@${IP4} \"cat >> ~/.ssh/authorized_keys\""
     out_data " $(text 53)" "ssh-copy-iуd -p 22 ${USERNAME}@${IP4}"
     echo
+    while read -r -t 0.1 -n 1; do :; done
     reading " $(text 54) " ANSWER_SSH
     if [[ "${ANSWER_SSH}" == [yY] ]]; then
         # Цикл проверки наличия ключа
