@@ -1158,7 +1158,7 @@ ssh_setup() {
     if [[ "${ANSWER_SSH}" == [yY] ]]; then
         # Цикл проверки наличия ключа
         while true; do
-            if [[ -s "/home/${USERNAME}/.ssh/authorized_keys" || -s "/root/.ssh/authorized_keys" ]]; then
+            if [[ -n $(grep -v '^[[:space:]]*$' "/home/${USERNAME}/.ssh/authorized_keys") || -n $(grep -v '^[[:space:]]*$' "/root/.ssh/authorized_keys") ]]; then
                 info " $(text 56) "
                 break
             else
