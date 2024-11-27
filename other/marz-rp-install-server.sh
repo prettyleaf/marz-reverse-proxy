@@ -106,8 +106,8 @@ E[44]="Issuing certificates."
 R[44]="Выдача сертификатов."
 E[45]="Configuring NGINX."
 R[45]="Настройка NGINX."
-E[46]="Configuring Mazrban Xray."
-R[46]="Настройка Mazrban Xray."
+E[46]="Setting up a panel for Xray."
+R[46]="Настройка панели для Xray."
 E[47]="Configuring UFW."
 R[47]="Настройка UFW."
 E[48]="Configuring SSH."
@@ -134,8 +134,8 @@ E[58]="SAVE THIS SCREEN!"
 R[58]="СОХРАНИ ЭТОТ ЭКРАН!"
 E[59]="Access the panel at the link:"
 R[59]="Доступ по ссылке к панели:"
-E[60]="Secret key:"
-R[60]="Секретный ключ:"
+E[60]="Quick subscription link for connection:"
+R[60]="Быстрая ссылка на подписку для подключения:"
 E[61]="Access Adguard-home at the link:"
 R[61]="Доступ по ссылке к adguard-home:"
 E[62]="SSH connection:"
@@ -148,14 +148,14 @@ E[65]="Log file path:"
 R[65]="Путь к лог файлу:"
 E[66]="Prometheus monitor."
 R[66]="Мониторинг Prometheus."
-E[66]="Prometheus monitor."
-R[66]="Мониторинг Prometheus."
-E[67]="Enter the Telegram bot token for IP limit, Torrent ban:"
-R[67]="Введите токен Telegram бота для IP limit, Torrent ban:"
-E[68]="Set up the Telegram bot? [y/N]:"
-R[68]="Настроить telegram бота? [y/N]:"
-E[69]="Bot:\n  1. IP limit (default) \n  2. Torrent ban"
-R[69]="Бот:\n  1. IP limit (по умолчанию) \n  2. Torrent ban"
+E[67]="Set up the Telegram bot? [y/N]:"
+R[67]="Настроить telegram бота? [y/N]:"
+E[68]="Bot:\n  1. IP limit (default) \n  2. Torrent ban"
+R[68]="Бот:\n  1. IP limit (по умолчанию) \n  2. Torrent ban"
+E[69]="Enter the Telegram bot token for IP limit, Torrent ban:"
+R[69]="Введите токен Telegram бота для IP limit, Torrent ban:"
+E[70]="Secret key:"
+R[70]="Секретный ключ:"
 
 log_entry() {
     mkdir -p /usr/local/marz-rp/
@@ -393,7 +393,7 @@ data_entry() {
     tilda "$(text 10)"
     check_cf_token
     tilda "$(text 10)"
-    reading " $(text 60) " SECRET_PASSWORD
+    reading " $(text 70) " SECRET_PASSWORD
     echo
     reading " $(text 19) " REALITY
     tilda "$(text 10)"
@@ -412,16 +412,16 @@ data_entry() {
     echo
     validate_path SUBPATH
     tilda "$(text 10)"
-    reading " $(text 68) " ENABLE_BOT_CHOISE
+    reading " $(text 67) " ENABLE_BOT_CHOISE
     if [[ -z "$ENABLE_BOT_CHOISE" || "$ENABLE_BOT_CHOISE" =~ ^[Yy]$ ]]; then
         echo
-        hint " $(text 69) \n" && reading " $(text 1) " BOT_CHOISE
+        hint " $(text 68) \n" && reading " $(text 1) " BOT_CHOISE
         echo
         reading " $(text 35) " ADMIN_ID
         echo
         reading " $(text 34) " BOT_TOKEN_PANEL
         echo
-        reading " $(text 67) " BOT_TOKEN_BAN_LIMIT_OR_TORRENT
+        reading " $(text 69) " BOT_TOKEN_BAN_LIMIT_OR_TORRENT
     fi
     tilda "$(text 10)"
 
