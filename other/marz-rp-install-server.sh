@@ -637,8 +637,7 @@ issuance_of_certificates() {
     chown root:root cloudflare.credentials
     chmod 600 cloudflare.credentials
 
-    if [[ "$CFTOKEN" =~ [A-Z] ]]
-    then
+    if [[ "$CFTOKEN" =~ [A-Z] ]]; then
         echo "dns_cloudflare_api_token = ${CFTOKEN}" >> ${CF_CREDENTIALS_PATH}
     else
         echo "dns_cloudflare_email = ${EMAIL}" >> ${CF_CREDENTIALS_PATH}
@@ -658,13 +657,12 @@ issuance_of_certificates() {
     { crontab -l; echo "0 5 1 */2 * certbot -q renew"; } | crontab -
 
     nginx_or_haproxy=1
-    if [[ "${nginx_or_haproxy}" == "1" ]]
-    then
-        echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${domain}.conf
+    if [[ "${nginx_or_haproxy}" == "1" ]]; then
+        echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
         echo ""
         openssl dhparam -out /etc/nginx/dhparam.pem 2048
     else
-        echo "renew_hook = cat /etc/letsencrypt/live/${domain}/fullchain.pem /etc/letsencrypt/live/${domain}/privkey.pem > /etc/haproxy/certs/${domain}.pem && systemctl restart haproxy" >> /etc/letsencrypt/renewal/${domain}.conf
+        echo "renew_hook = cat /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem > /etc/haproxy/certs/${DOMAIN}.pem && systemctl restart haproxy" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
         echo ""
         openssl dhparam -out /etc/haproxy/dhparam.pem 2048
     fi
