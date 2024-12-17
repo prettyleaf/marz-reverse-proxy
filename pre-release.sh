@@ -1515,7 +1515,7 @@ server {
     return 444;
   }
   # Marz admin panel
-  location ~* /(${SUB_PATH}|${WEB_BASE_PATH}|api|docs|redoc|openapi.json|statics) {
+  location ~* /(${SUB_PATH}|${WEB_BASE_PATH}|api|statics) {
       proxy_redirect off;
       proxy_http_version 1.1;
       proxy_set_header Upgrade \$http_upgrade;
@@ -1524,42 +1524,6 @@ server {
       proxy_set_header Host \$host;
       proxy_set_header X-Real-IP \$remote_addr;
       proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-  }
-  # Xray Config
-  location /${CDNSPLIT} {
-      proxy_pass http://127.0.0.1:2063;
-      proxy_http_version 1.1;
-      proxy_redirect off;
-  }
-  # Xray Config
-  location ~ ^/(?<fwdport>\d+)/(?<fwdpath>.*)\$ {
-      if (\$hack = 1) {return 404;}
-      client_max_body_size 0;
-      client_body_timeout 1d;
-      grpc_read_timeout 1d;
-      grpc_socket_keepalive on;
-      proxy_read_timeout 1d;
-      proxy_http_version 1.1;
-      proxy_buffering off;
-      proxy_request_buffering off;
-      proxy_socket_keepalive on;
-      proxy_set_header Upgrade \$http_upgrade;
-      proxy_set_header Connection "upgrade";
-      proxy_set_header Host \$host;
-      proxy_set_header X-Real-IP \$remote_addr;
-      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-      if (\$content_type ~* "GRPC") {
-          grpc_pass grpc://127.0.0.1:\$fwdport\$is_args\$args;
-          break;
-      }
-      if (\$http_upgrade ~* "(WEBSOCKET|WS)") {
-          proxy_pass https://127.0.0.1:\$fwdport\$is_args\$args;
-          break;
-          }
-      if (\$request_method ~* ^(PUT|POST|GET)\$) {
-          proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
-          break;
-      }
   }
   ${COMMENT_METRIC}
   ${COMMENT_AGH}
