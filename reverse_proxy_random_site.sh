@@ -23,9 +23,9 @@ msg_banner "Обновляем пакеты и устанавливаем zip...
 apt-get update -y && apt-get install -y zip wget unzip || { msg_err "Ошибка при установке пакетов"; exit 1; }
 
 msg_banner "Создаем необходимые папки..."
-mkdir -p /var/www/html/ /usr/local/marz-rp/
+mkdir -p /var/www/html/ /usr/local/reverse_proxy/
 
-cd /usr/local/marz-rp/ || { msg_err "Не удалось перейти в /usr/local/marz-rp/"; exit 1; }
+cd /usr/local/reverse_proxy/ || { msg_err "Не удалось перейти в /usr/local/reverse_proxy/"; exit 1; }
 
 if [[ ! -d "simple-web-templates-main" ]]; then
     msg_inf "Скачиваем шаблоны..."
@@ -44,9 +44,10 @@ rm -rf assets ".gitattributes" "README.md" "_config.yml"
 RandomHTML=$(ls -d */ | shuf -n1)  # Обновил для выбора случайного подкаталога
 msg_inf "Random template name: ${RandomHTML}"
 
+# Если шаблон существует, копируем его в /var/www/html
 if [[ -d "${RandomHTML}" && -d "/var/www/html/" ]]; then
     msg_inf "Копируем шаблон в /var/www/html/..."
-    rm -rf /var/www/html/*
+    rm -rf /var/www/html/*  # Очищаем старую папку
     cp -a "${RandomHTML}/." /var/www/html/ || { msg_err "Ошибка при копировании шаблона"; exit 1; }
     msg_ok "Шаблон успешно извлечен и установлен!"
 else

@@ -1,4 +1,4 @@
-# MARZ-REVERSE-PROXY ([Russian](/README_RU.md))
+# REVERSE_PROXY ([Russian](/README_RU.md))
 <p align="center"><a href="#"><img src="./media/marz.png" alt="Image" width="400" height="300"></a></p>
 
 -----
@@ -54,16 +54,16 @@ This script is designed to quickly and easily set up a hidden proxy server, with
 
 -----
 
-### Installation of MARZ-RP:
+### Installation of REVERSE_PROXY:
 
 To begin configuring the server, simply run the following command in a terminal:
 ```sh
-bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads/main/marz-rp-install-server.sh)
+bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads/main/reverse_proxy_server.sh)
 ```
 
 ### Selecting and installing a random template for the website:
 ```sh
-bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads/main/marz-rp-random-site.sh)
+bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads/main/reverse_proxy_random_site.sh)
 ```
 
 The script will then prompt you for the necessary configuration information:

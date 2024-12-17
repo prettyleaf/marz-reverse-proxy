@@ -1705,7 +1705,7 @@ EOF
 }
 
 ###################################
-### Installing marz bot
+### Installing bot
 ###################################
 bot_install() {    
     # IP_LIMIT

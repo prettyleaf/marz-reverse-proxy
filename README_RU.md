@@ -1,4 +1,4 @@
-# MARZ-REVERSE-PROXY ([English](/README.md))
+# REVERSE_PROXY ([English](/README.md))
 <p align="center"><a href="#"><img src="./media/marz.png" alt="Image" width="400" height="300"></a></p>
 
 -----
@@ -53,17 +53,17 @@
 11. Выбор случайного веб-сайта из массива для добавления дополнительного уровня конфиденциальности и сложности для анализа трафика.
 -----
 
-### Установка MARZ-RP:
+### Установка REVERSE_PROXY:
 
 Для начала настройки сервера выполните следующую команду в терминале:
 ```sh
-bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads/main/marz-rp-install-server.sh)
+bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads/main/reverse_proxy_server.sh)
 ```
 
 
 ### Выбор и установка случайного шаблона для веб-сайта:
 ```sh
-bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads/main/marz-rp-random-site.sh)
+bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads/main/reverse_proxy_random_site.sh)
 ```
 
 Скрипт запросит у вас необходимую конфигурационную информацию:
