@@ -1887,8 +1887,9 @@ EOF
 ### Information output
 ###################################
 data_output() {
+  tilda "$(text 10)"
   info " $(text 58) "
-  printf '0\n' | x-ui | grep --color=never -i ':'
+  printf '0\n' | marzban status | grep --color=never -i ':'
   echo
   out_data " $(text 59) " "https://${DOMAIN}/${WEB_BASE_PATH}/"
   if [[ $CHOISE_DNS = "2" ]]; then
