@@ -819,7 +819,7 @@ data_entry() {
 #    CDNWS=$(eval ${generate[path]})
     WEB_BASE_PATH=$(eval ${generate[path]})
     SUB_PATH=$(eval ${generate[path]})
-    SUB_JSON_PATH=$(eval ${generate[path]})
+#    SUB_JSON_PATH=$(eval ${generate[path]})
   else
 #    validate_path CDNGRPC
 #    echo
@@ -832,8 +832,8 @@ data_entry() {
     validate_path WEB_BASE_PATH
     echo
     validate_path SUB_PATH
-    echo
-    validate_path SUB_JSON_PATH
+#    echo
+#    validate_path SUB_JSON_PATH
   fi
 
   if [[ ${args[mon]} == "true" ]]; then
@@ -1514,15 +1514,15 @@ server {
     return 444;
   }
   # Marz admin panel
-  location ~* /(${SUB_PATH}|${WEB_BASE_PATH}|api|statics) {
-      proxy_redirect off;
-      proxy_http_version 1.1;
-      proxy_set_header Upgrade \$http_upgrade;
-      proxy_set_header Connection "upgrade";
-      proxy_pass http://127.0.0.1:8000;
-      proxy_set_header Host \$host;
-      proxy_set_header X-Real-IP \$remote_addr;
-      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+  location ~* /(${SUBPATH}|${WEBBASEPATH}|api|docs|redoc|openapi.json|statics) {
+    proxy_redirect off;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   }
   ${COMMENT_METRIC}
   ${COMMENT_AGH}
