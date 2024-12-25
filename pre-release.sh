@@ -1514,7 +1514,7 @@ server {
     return 444;
   }
   # Marz admin panel
-  location ~* /(${SUBPATH}|${WEBBASEPATH}|api|docs|redoc|openapi.json|statics) {
+  location ~* /(${SUB_PATH}|${WEB_BASE_PATH}|api|docs|redoc|openapi.json|statics) {
     proxy_redirect off;
     proxy_http_version 1.1;
     proxy_set_header Upgrade \$http_upgrade;
