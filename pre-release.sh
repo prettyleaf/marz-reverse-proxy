@@ -1294,15 +1294,6 @@ EOF
 
   { crontab -l; echo "0 5 1 */2 * certbot -q renew"; } | crontab -
   tilda "$(text 10)"
-#  if [[ "${nginx_or_haproxy}" == "1" ]]; then
-#    echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
-#    echo ""
-#    openssl dhparam -out /etc/nginx/dhparam.pem 2048
-#  else
-#    echo "renew_hook = cat /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem > /etc/haproxy/certs/${DOMAIN}.pem && systemctl restart haproxy" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
-#    echo ""
-#    openssl dhparam -out /etc/haproxy/dhparam.pem 2048
-#  fi
 }
 
 ###################################
@@ -1332,11 +1323,10 @@ monitoring() {
 nginx_setup() {
   info " $(text 45) "
 
-  mkdir -p /etc/nginx/stream-enabled/
-  mkdir -p /etc/nginx/conf.d/
+  mkdir -p /etc/nginx/stream-enabled/ /etc/nginx/conf.d/
   rm -rf /etc/nginx/conf.d/default.conf
   touch /etc/nginx/.htpasswd
-  htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
+#  htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
   openssl dhparam -out /etc/nginx/dhparam.pem 2048
 
   case "$SYSTEM" in
@@ -1468,13 +1458,13 @@ EOF
 ###################################
 local_conf() {
   cat > /etc/nginx/conf.d/local.conf <<EOF
-#server {
-#  listen                               80;
-#  server_name                          ${DOMAIN} *.${DOMAIN};
-#  location / {
-#    return 301                         https://${DOMAIN}\$request_uri;
-#  }
-#}
+server {
+  listen                               80;
+  server_name                          ${DOMAIN} *.${DOMAIN};
+  location / {
+    return 301                         https://${DOMAIN}\$request_uri;
+  }
+}
 server {
   listen                               9090 default_server;
   server_name                          ${DOMAIN} *.${DOMAIN};
@@ -1502,19 +1492,11 @@ server {
   index index.html index.htm index.php index.nginx-debian.html;
   root /var/www/html/;
 
-  if (\$host !~* ^(.+\.)?${DOMAIN}\$ ){return 444;}
-  if (\$scheme ~* https) {set \$safe 1;}
-  if (\$ssl_server_name !~* ^(.+\.)?${DOMAIN}\$ ) {set \$safe "\${safe}0"; }
-  if (\$safe = 10){return 444;}
-  if (\$request_uri ~ "(\"|'|\`|~|,|:|--|;|%|\\$|&&|\?\?|0x00|0X00|\||\\|\{|\}|\[|\]|<|>|\.\.\.|\.\.\/|\/\/\/)"){set \$hack 1;}
-  error_page 400 401 402 403 500 501 502 503 504 =404 /404;
-  proxy_intercept_errors on;
-
   if (\$host = ${IP4}) {
     return 444;
   }
   # Marz admin panel
-  location ~* /(${SUB_PATH}|${WEB_BASE_PATH}|api|docs|redoc|openapi.json|statics) {
+  location ~* /(${WEB_BASE_PATH}|${SUB_PATH}|api|docs|redoc|openapi.json|statics) {
     proxy_redirect off;
     proxy_http_version 1.1;
     proxy_set_header Upgrade \$http_upgrade;
@@ -1788,7 +1770,7 @@ EOF
     sudo wget -N -P /var/lib/marzban/templates/subscription/ https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
     systemctl stop torrent-blocker
     systemctl start torrent-blocker
-    timeout 5 marzban up
+    timeout 7 marzban up
 
     tilda "$(text 10)"
 }

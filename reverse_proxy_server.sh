@@ -758,9 +758,6 @@ upstream block {
 upstream web {
     server 127.0.0.1:7443;
 }
-#upstream reality {
-#    server 127.0.0.1:8443;
-#}
 upstream xtls {
     server 127.0.0.1:9443;
 }
@@ -842,36 +839,6 @@ server {
         proxy_pass http://127.0.0.1:2063;
         proxy_http_version 1.1;
         proxy_redirect off;
-    }
-    # Xray Config
-    location ~ ^/(?<fwdport>\d+)/(?<fwdpath>.*)\$ {
-        if (\$hack = 1) {return 404;}
-        client_max_body_size 0;
-        client_body_timeout 1d;
-        grpc_read_timeout 1d;
-        grpc_socket_keepalive on;
-        proxy_read_timeout 1d;
-        proxy_http_version 1.1;
-        proxy_buffering off;
-        proxy_request_buffering off;
-        proxy_socket_keepalive on;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        if (\$content_type ~* "GRPC") {
-            grpc_pass grpc://127.0.0.1:\$fwdport\$is_args\$args;
-            break;
-        }
-        if (\$http_upgrade ~* "(WEBSOCKET|WS)") {
-            proxy_pass https://127.0.0.1:\$fwdport\$is_args\$args;
-            break;
-            }
-        if (\$request_method ~* ^(PUT|POST|GET)\$) {
-            proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
-            break;
-        }
     }
     # Adguard home
     ${COMMENT_AGH}
@@ -1097,7 +1064,7 @@ EOF
     sudo wget -N -P /var/lib/marzban/templates/subscription/ https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
     systemctl stop torrent-blocker
     systemctl start torrent-blocker
-    timeout 5 marzban up
+    timeout 7 marzban up
 
     tilda "$(text 10)"
 }
