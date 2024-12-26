@@ -63,7 +63,7 @@ bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads
 
 ### Selecting and installing a random template for the website:
 ```sh
-bash <(curl -Ls https://github.com/cortez24rus/marz-reverse-proxy/raw/refs/heads/main/reverse_proxy_random_site.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/reverse_proxy_random_site.sh)
 ```
 
 The script will then prompt you for the necessary configuration information:
