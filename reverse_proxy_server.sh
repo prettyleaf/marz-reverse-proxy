@@ -537,11 +537,11 @@ dns_encryption() {
     dns_systemd_resolved
     case $CHOISE in
         1)
-        COMMENT_AGH=""
-        tilda "$(text 10)"
-        ;;
+          COMMENT_AGH=""
+          tilda "$(text 10)"
+          ;;
         2)
-            COMMENT_AGH="location /${ADGUARDPATH}/ {
+          COMMENT_AGH="location /${ADGUARDPATH}/ {
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -552,15 +552,15 @@ dns_encryption() {
         proxy_pass http://127.0.0.1:8081/;
         break;
     }"
-            dns_adguard_home
-            dns_systemd_resolved_for_adguard
-            tilda "$(text 10)"
-            ;;
+          dns_adguard_home
+          dns_systemd_resolved_for_adguard
+          tilda "$(text 10)"
+          ;;
         *)
 
-            warning " $(text 33)"
-            dns_encryption
-            ;;
+          warning " $(text 33)"
+          dns_encryption
+          ;;
     esac
 }
 
@@ -679,7 +679,6 @@ nginx_setup() {
     mkdir -p /etc/nginx/stream-enabled/
     rm -rf /etc/nginx/conf.d/default.conf
     touch /etc/nginx/.htpasswd
-#    htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
 
     nginx_conf
     stream_conf
@@ -749,7 +748,6 @@ stream_conf() {
 map \$ssl_preread_server_name \$backend {
     ${DOMAIN}                   web;
     www.${DOMAIN}               xtls;
-#    ${REALITY}                  reality;
     default                     block;
 }
 upstream block {
@@ -819,10 +817,6 @@ server {
     if (\$host = ${IP4}) {
         return 444;
     }
-#    location / {
-#        auth_basic "Restricted Content";
-#        auth_basic_user_file /etc/nginx/.htpasswd;
-#    }
     # Marz admin panel
     location ~* /(${SUBPATH}|${WEBBASEPATH}|api|docs|redoc|openapi.json|statics) {
         proxy_redirect off;
@@ -833,12 +827,6 @@ server {
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-    # Xray Config
-    location /${CDNSPLIT} {
-        proxy_pass http://127.0.0.1:2063;
-        proxy_http_version 1.1;
-        proxy_redirect off;
     }
     # Adguard home
     ${COMMENT_AGH}
