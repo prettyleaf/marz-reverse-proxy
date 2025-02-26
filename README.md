@@ -49,15 +49,14 @@ SERVER 2
   
 1. Proxy server configuration:
    - Support for automatic configuration updates through subscription and JSON subscription with the ability to convert to formats for popular applications.
-   - https://github.com/blagodaren/reverse-marz-node
    - The user “flow”: “xtls-rprx-vision” must be enabled
      - TCP-REALITY (Steal oneself) (disconnection will result in loss of access)
      - TCP-TLS
    - Important: it is recommended to choose one suitable connection type and use it for optimal performance. You can disable all incoming connections except the one marked as STEAL. Disabling STEAL will result in losing access to the web interface, as this connection type is used for proxy management access.
-   - [Custom subcription (by legiz)](https://github.com/legiz-ru/marz-sub).
-   - [Node for reverse proxy (by blagodaren)](https://github.com/blagodaren/reverse-marz-node).
-   - [Torrent blocker (by kutovoys)](https://github.com/kutovoys/marzban-torrent-blocker).
-   - [IP Limit (by houshmand-2005)](https://github.com/houshmand-2005/V2IpLimit).
+   - Custom subcription [(by legiz)](https://github.com/legiz-ru/marz-sub).
+   - Node for reverse proxy [(by blagodaren)](https://github.com/blagodaren/reverse-marz-node).
+   - Torrent blocker [(by kutovoys)](https://github.com/kutovoys/marzban-torrent-blocker).
+   - IP Limit [(by houshmand-2005)](https://github.com/houshmand-2005/V2IpLimit).
 2. Configuring NGINX reverse proxy on port 443.
 3. Providing security:
    - Automatic system updates via unattended-upgrades.
