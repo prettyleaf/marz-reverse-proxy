@@ -3,14 +3,20 @@
 
 -----
 
-### Proxy using VLESS-TCP-XTLS-Vision and VLESS-TCP-REALITY (Steal from yourself) behind reverse-proxy NGINX
-This script is designed to quickly and easily set up a hidden proxy server, with masking via NGINX. In this variant, all incoming requests are handled by NGINX, and the server acts as a proxy server only if the request contains the correct path (URI). This increases security and helps to hide the true purpose of the server.
+### Server using NGINX reverse proxy
+This script is designed for quick and easy setup of a reverse proxy server using NGINX. In this setup, all incoming requests are processed by NGINX, and the server functions as a reverse proxy server only if the request contains the correct path (URI). This enhances security and improves access control management.
 
 > [!IMPORTANT]
 >  This script has been tested on Debian 12 in a KVM virtualization environment. You will need your own domain, which needs to be bound to Cloudflare for it to work correctly. It is recommended to run the script as root on a freshly installed system.
 
 > [!NOTE]
 > The script is configured according to routing rules for users in Russia.
+
+### Supported Operating Systems:
+
+| **Ubuntu**       | **Debian**      |
+|------------------|-----------------|
+| 24.04 LTS        | 12 bookworm     |
 
 -----
 
@@ -20,10 +26,17 @@ This script is designed to quickly and easily set up a hidden proxy server, with
    - Bind your domain to Cloudflare.
    - Add the following DNS records:
 
+SERVER 1
 | Type  | Name             | Content          | Proxy status  |
 | ----- | ---------------- | ---------------- | ------------- |
-| A     | your_domain_name | your_server_ip   | DNS only      |
-| CNAME | www              | your_domain_name | DNS only      |
+| A     | example.com      | your_server_ip   | DNS only      |
+| CNAME | www              | example.com      | DNS only      |
+
+SERVER 2
+| Type  | Name             | Content          | Proxy status  |
+| ----- | ---------------- | ---------------- | ------------- |
+| A     | nl.example.com   | your_server_ip   | DNS only      |
+| CNAME | www.nl           | nl.example.com   | DNS only      |
    
 3. SSL/TLS settings in Cloudflare:
    - Go to SSL/TLS > Overview and select Full for the Configure option.
@@ -34,23 +47,26 @@ This script is designed to quickly and easily set up a hidden proxy server, with
 
 ### Includes:
   
-1. Xray server configuration with MARZBAN:
-   - VLESS-TCP-XTLS-Vision и VLESS-TCP-REALITY (Steal from yourself).
-   - Connection of subscription for automatic configuration updates.
+1. Proxy server configuration:
+   - Support for automatic configuration updates through subscription and JSON subscription with the ability to convert to formats for popular applications.
+   - The user “flow”: “xtls-rprx-vision” must be enabled
+     - TCP-REALITY (Steal oneself) (disconnection will result in loss of access)
+     - TCP-TLS
+   - Important: It is recommended to choose one suitable connection type and use only that one (otherwise, you may attract the censor's attention). You can disable all incoming connections except the one marked as STEAL. Disabling STEAL will result in losing access to the web interface, as this connection type is used for proxy management access.
    - [Custom subcription](https://github.com/x0sina/marzban-sub).
    - [Torrent blocker](https://github.com/kutovoys/marzban-torrent-blocker).
    - [IP Limit](https://github.com/houshmand-2005/V2IpLimit).
 2. Configuring NGINX reverse proxy on port 443.
 3. Providing security:
    - Automatic system updates via unattended-upgrades.
-4. Configuring Cloudflare SSL certificates with automatic updates to secure connections.
-5. Configuring WARP to protect traffic.
-6. Enabling BBR - improving the performance of TCP connections.
-7. Configuring UFW (Uncomplicated Firewall) for access control.
-8. Configuring SSH, to provide the minimum required security.
-9. Disabling IPv6 to prevent possible vulnerabilities.
-10. Encrypting DNS queries using systemd-resolved (Dot) or AdGuard Home (DoH-Dot).
-11. Selecting a random website from an array to add an extra layer of privacy and complexity for traffic analysis.
+   - Configuring Cloudflare SSL certificates with automatic updates to secure connections.
+   - Configuring WARP to protect traffic.
+   - Configuring UFW (Uncomplicated Firewall) for access control.
+   - Configuring SSH, to provide the minimum required security.
+   - Disabling IPv6 to prevent possible vulnerabilities.
+   - Encrypting DNS queries using systemd-resolved (DoT) or AdGuard Home (Dot, DoH).
+   - Selecting a random website template from an array.
+4. Enabling BBR - improving the performance of TCP connections.
 
 -----
 
@@ -71,12 +87,21 @@ The script will then prompt you for the necessary configuration information:
 <p align="center"><a href="#"><img src="./media/marz_rp_install.png" alt="Image"></a></p>
 
 ### Note: 
-- Once the configuration is complete, the script will display all the necessary links and login information for the MARZBAN administration panel.
+- Once the configuration is complete, the script will display all the necessary links and login information for the administration panel.
 - All configurations can be modified as needed due to the flexibility of the settings.
 
 -----
 
-### If this script was useful for you, give it a star ⭐
+> [!IMPORTANT]
+> This repository is intended solely for educational purposes and for studying the principles of reverse proxy servers and network security. The script demonstrates the setup of a proxy server using NGINX for reverse proxy, traffic management, and attack protection.
+>
+>We strongly remind you that using this tool to bypass network restrictions or censorship is illegal in certain countries that have laws regulating the use of technologies to circumvent internet restrictions.
+>
+>This project is not intended for use in ways that violate information protection laws or interfere with censorship mechanisms. We take no responsibility for any legal consequences arising from the use of this script.
+>
+>Use this tool/script only for demonstration purposes, as an example of reverse proxy operation and data protection. We strongly recommend removing the script after reviewing it. Further use is at your own risk.
+>
+>If you are unsure whether the use of this tool or its components violates the laws of your country, refrain from interacting with this tool.
 
 -----
 
