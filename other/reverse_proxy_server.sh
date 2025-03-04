@@ -1226,7 +1226,7 @@ EOF
         /opt/marzban/.env
 
     # Скачивание и распаковка xray конфига
-    wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/dev/config/xray_config_new.json; do
+    wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/dev/config/xray_config_new.json
     
     mv -f xray_config_new.json xray_config.json
     
