@@ -1,0 +1,439 @@
+{
+    "log": {
+      "loglevel": "info"
+    },
+    "routing": {
+      "rules": [
+        {
+          "ip": [
+            "geoip:private"
+          ],
+          "outboundTag": "blocked",
+          "type": "field"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "geosite:category-ads-all"
+          ],
+          "outboundTag": "blocked"
+        },
+        {
+          "protocol": [
+            "bittorrent"
+          ],
+          "outboundTag": "TORRENT",
+          "type": "field"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "geosite:google"
+          ],
+          "outboundTag": "IPv4"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "domain:gemini.google.com"
+          ],
+          "outboundTag": "IPv4"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "geosite:openai"
+          ],
+          "outboundTag": "IPv4"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "geosite:intel",
+            "geosite:category-gov-ru"
+          ],
+          "outboundTag": "warp"
+        },
+        {
+          "type": "field",
+          "ip": [
+            "geoip:ru"
+          ],
+          "outboundTag": "warp"
+        },
+        {
+          "type": "field",
+          "domain": [
+            "regexp:.*\\.ru$",
+            "regexp:.*\\.su$"
+          ],
+          "outboundTag": "warp"
+        }
+      ]
+    },
+    "inbounds": [
+      {
+        "listen": "127.0.0.1",
+        "port": 2053,
+        "protocol": "trojan",
+        "settings": {
+          "clients": [],
+          "fallbacks": []
+        },
+        "streamSettings": {
+          "grpcSettings": {
+            "authority": "TEMP_DOMAIN",
+            "multiMode": false,
+            "serviceName": "/2053/TEMP_PATHGRPC"
+          },
+          "network": "grpc",
+          "security": "none"
+        },
+        "tag": "CDN_Grpc",
+        "sniffing": {
+          "enabled": false,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic",
+            "fakedns"
+          ],
+          "metadataOnly": false,
+          "routeOnly": false
+        },
+        "allocate": {
+          "strategy": "always",
+          "refresh": 5,
+          "concurrency": 3
+        }
+      },
+      {
+        "listen": "/dev/shm/uds2023.sock,0666",
+        "port": "",
+        "protocol": "vless",
+        "settings": {
+          "clients": [],
+          "decryption": "none",
+          "fallbacks": []
+        },
+        "streamSettings": {
+          "network": "xhttp",
+          "security": "none",
+          "xhttpSettings": {
+            "path": "/TEMP_XHTTP",
+            "host": "",
+            "headers": {},
+            "scMaxBufferedPosts": 30,
+            "scMaxEachPostBytes": "1000000",
+            "noSSEHeader": false,
+            "xPaddingBytes": "100-1000",
+            "mode": "packet-up"
+          },
+          "sockopt": {
+            "acceptProxyProtocol": false,
+            "tcpFastOpen": true,
+            "mark": 0,
+            "tproxy": "off",
+            "tcpMptcp": true,
+            "tcpNoDelay": true,
+            "domainStrategy": "UseIP",
+            "tcpMaxSeg": 1440,
+            "dialerProxy": "",
+            "tcpKeepAliveInterval": 0,
+            "tcpKeepAliveIdle": 300,
+            "tcpUserTimeout": 10000,
+            "tcpcongestion": "bbr",
+            "V6Only": false,
+            "tcpWindowClamp": 600,
+            "interface": ""
+          }
+        },
+        "tag": "CDN_XHTTP",
+        "sniffing": {
+          "enabled": false,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic",
+            "fakedns"
+          ],
+          "metadataOnly": false,
+          "routeOnly": false
+        },
+        "allocate": {
+          "strategy": "always",
+          "refresh": 5,
+          "concurrency": 3
+        }
+      },
+      {
+        "listen": "127.0.0.1",
+        "port": 2073,
+        "protocol": "vless",
+        "settings": {
+          "clients": [],
+          "decryption": "none",
+          "fallbacks": []
+        },
+        "streamSettings": {
+          "httpupgradeSettings": {
+            "acceptProxyProtocol": false,
+            "headers": {},
+            "host": "TEMP_DOMAIN",
+            "path": "/2073/TEMP_PATHHTTPU"
+          },
+          "network": "httpupgrade",
+          "security": "tls",
+          "tlsSettings": {
+            "alpn": [],
+            "certificates": [
+              {
+                "buildChain": false,
+                "certificateFile": "/var/lib/marzban/certs/fullchain.pem",
+                "keyFile": "/var/lib/marzban/certs/key.pem",
+                "ocspStapling": 3600,
+                "oneTimeLoading": false,
+                "usage": "encipherment"
+              }
+            ],
+            "cipherSuites": "",
+            "disableSystemRoot": false,
+            "enableSessionResumption": false,
+            "maxVersion": "1.3",
+            "minVersion": "1.2",
+            "rejectUnknownSni": false,
+            "serverName": ""
+          }
+        },
+        "tag": "CDN_HU",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic",
+            "fakedns"
+          ],
+          "metadataOnly": false,
+          "routeOnly": false
+        },
+        "allocate": {
+          "strategy": "always",
+          "refresh": 5,
+          "concurrency": 3
+        }
+      },
+      {
+        "listen": "127.0.0.1",
+        "port": 2083,
+        "protocol": "vless",
+        "settings": {
+          "clients": [],
+          "decryption": "none",
+          "fallbacks": []
+        },
+        "streamSettings": {
+          "network": "ws",
+          "security": "tls",
+          "tlsSettings": {
+            "alpn": [],
+            "certificates": [
+              {
+                "buildChain": false,
+                "certificateFile": "/var/lib/marzban/certs/fullchain.pem",
+                "keyFile": "/var/lib/marzban/certs/key.pem",
+                "ocspStapling": 3600,
+                "oneTimeLoading": false,
+                "usage": "encipherment"
+              }
+            ],
+            "cipherSuites": "",
+            "disableSystemRoot": false,
+            "enableSessionResumption": false,
+            "maxVersion": "1.3",
+            "minVersion": "1.2",
+            "rejectUnknownSni": false,
+            "serverName": "TEMP_DOMAIN"
+          },
+          "wsSettings": {
+            "acceptProxyProtocol": false,
+            "headers": {},
+            "host": "TEMP_DOMAIN",
+            "path": "/2083/TEMP_PATHWS"
+          }
+        },
+        "tag": "CDN_WS",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic",
+            "fakedns"
+          ],
+          "metadataOnly": false,
+          "routeOnly": false
+        },
+        "allocate": {
+          "strategy": "always",
+          "refresh": 5,
+          "concurrency": 3
+        }
+      },
+      {
+        "listen": "127.0.0.1",
+        "port": 7443,
+        "protocol": "vless",
+        "settings": {
+          "clients": [],
+          "decryption": "none",
+          "fallbacks": []
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "realitySettings": {
+            "dest": "127.0.0.1:36077",
+            "maxClient": "",
+            "maxTimediff": 0,
+            "minClient": "",
+            "privateKey": "TEMP_PRIVATEKEY0",
+            "serverNames": [
+              "TEMP_DOMAIN"
+            ],
+            "shortIds": [
+              ""
+            ],
+            "show": false,
+            "xver": 2
+          },
+          "security": "reality",
+          "tcpSettings": {
+            "acceptProxyProtocol": true,
+            "header": {
+              "type": "none"
+            }
+          }
+        },
+        "tag": "Steal",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls",
+            "quic",
+            "fakedns"
+          ],
+          "metadataOnly": false,
+          "routeOnly": false
+        }
+      },
+      {
+        "listen": "127.0.0.1",
+        "port": 9443,
+        "protocol": "vless",
+        "settings": {
+          "clients": [],
+          "decryption": "none",
+          "fallbacks": [
+            {
+              "alpn": "",
+              "dest": "127.0.0.1:9090",
+              "name": "",
+              "path": "",
+              "xver": 0
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "tls",
+          "tcpSettings": {
+            "acceptProxyProtocol": true,
+            "header": {
+              "type": "none"
+            }
+          },
+          "tlsSettings": {
+            "alpn": [
+              "http/1.1"
+            ],
+            "certificates": [
+              {
+                "buildChain": false,
+                "certificateFile": "/var/lib/marzban/certs/fullchain.pem",
+                "keyFile": "/var/lib/marzban/certs/key.pem",
+                "ocspStapling": 3600,
+                "oneTimeLoading": false,
+                "usage": "encipherment"
+              }
+            ],
+            "cipherSuites": "",
+            "disableSystemRoot": false,
+            "enableSessionResumption": false,
+            "maxVersion": "1.3",
+            "minVersion": "1.3",
+            "rejectUnknownSni": false,
+            "serverName": "www.TEMP_DOMAIN"
+          }
+        },
+        "tag": "XTLS",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ],
+          "metadataOnly": false,
+          "routeOnly": false
+        },
+        "allocate": {
+          "strategy": "always",
+          "refresh": 5,
+          "concurrency": 3
+        }
+      }
+    ],
+    "outbounds": [
+      {
+        "tag": "direct",
+        "protocol": "freedom",
+        "settings": {
+          "domainStrategy": "UseIPv4",
+          "redirect": "",
+          "noises": []
+        }
+      },
+      {
+        "protocol": "blackhole",
+        "tag": "TORRENT"
+      },
+      {
+        "tag": "blocked",
+        "protocol": "blackhole",
+        "settings": {}
+      },
+      {
+        "tag": "IPv4",
+        "protocol": "freedom",
+        "settings": {
+          "domainStrategy": "UseIPv4",
+          "redirect": "",
+          "noises": []
+        }
+      },
+      {
+        "tag": "warp",
+        "protocol": "socks",
+        "settings": {
+          "servers": [
+            {
+              "address": "127.0.0.1",
+              "port": 40000,
+              "users": []
+            }
+          ]
+        }
+      }
+    ]
+  }
+  

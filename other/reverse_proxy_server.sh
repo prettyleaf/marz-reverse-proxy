@@ -468,7 +468,6 @@ data_entry() {
     tilda "$(text 10)"
     check_cf_token
     tilda "$(text 10)"
-    SECRET_PASSWORD="84ghrhhu43884hgHGrhguhure7!"
     validate_path "CDNGRPC"
     echo
     validate_path "CDNXHTTP"
@@ -1229,17 +1228,18 @@ EOF
         /opt/marzban/.env
 
     # Скачивание и распаковка xray конфига
-    while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/config/xray_config.gpg; do
+    while ! wget -q --progress=dot:mega --timeout=30 --tries=10 --retry-connrefused https://raw.githubusercontent.com/cortez24rus/marz-reverse-proxy/refs/heads/main/config/xray_config_new.json; do
         warning " $(text 38) "
         sleep 3
     done
-    echo ${SECRET_PASSWORD} | gpg --batch --yes --passphrase-fd 0 -d xray_config.gpg > xray_config.json
+
+    mv -f xray_config_new.json xray_config.json
     
     # Выполняем замены
     sed -i \
         -e "s|TEMP_DOMAIN|$DOMAIN|g" \
         -e "s|TEMP_PATHGRPC|$CDNGRPC|g" \
-        -e "s|TEMP_PATHSPLIT|$CDNXHTTP|g" \
+        -e "s|TEMP_XHTTP|$CDNXHTTP|g" \
         -e "s|TEMP_PATHHTTPU|$CDNHTTPU|g" \
         -e "s|TEMP_PATHWS|$CDNWS|g" \
         -e "s|TEMP_PRIVATEKEY0|$PRIVATE_KEY0|g" \
