@@ -156,6 +156,14 @@ E[69]="Enter the Telegram bot token for IP limit, Torrent ban:"
 R[69]="Введите токен Telegram бота для IP limit, Torrent ban:"
 E[70]="Secret key:"
 R[70]="Секретный ключ:"
+E[71]="Current operating system is \$SYS.\\\n The system lower than \$SYSTEM \${MAJOR[int]} is not supported. Feedback: [https://github.com/cortez24rus/xui-reverse-proxy/issues]"
+R[71]="Текущая операционная система: \$SYS.\\\n Система с версией ниже, чем \$SYSTEM \${MAJOR[int]}, не поддерживается. Обратная связь: [https://github.com/cortez24rus/xui-reverse-proxy/issues]"
+E[72]="Install dependence-list:"
+R[72]="Список зависимостей для установки:"
+E[73]="All dependencies already exist and do not need to be installed additionally."
+R[73]="Все зависимости уже установлены и не требуют дополнительной установки."
+E[74]="OS - $SYS"
+R[74]="OS - $SYS"
 
 log_entry() {
     mkdir -p /usr/local/marz-rp/
@@ -178,11 +186,78 @@ select_language() {
   esac
 }
 
-### Проверка рута ###
+###################################
+### Checking the operating system
+###################################
+check_operating_system() {
+  if [ -s /etc/os-release ]; then
+    SYS="$(grep -i pretty_name /etc/os-release | cut -d \" -f2)"
+  elif [ -x "$(type -p hostnamectl)" ]; then
+    SYS="$(hostnamectl | grep -i system | cut -d : -f2)"
+  elif [ -x "$(type -p lsb_release)" ]; then
+    SYS="$(lsb_release -sd)"
+  elif [ -s /etc/lsb-release ]; then
+    SYS="$(grep -i description /etc/lsb-release | cut -d \" -f2)"
+  elif [ -s /etc/redhat-release ]; then
+    SYS="$(grep . /etc/redhat-release)"
+  elif [ -s /etc/issue ]; then
+    SYS="$(grep . /etc/issue | cut -d '\' -f1 | sed '/^[ ]*$/d')"
+  fi
+
+  REGEX=("debian" "ubuntu" "centos|red hat|kernel|alma|rocky")
+  RELEASE=("Debian" "Ubuntu" "CentOS")
+  EXCLUDE=("---")
+  MAJOR=("10" "20" "7")
+  PACKAGE_UPDATE=("apt -y update" "apt -y update" "yum -y update --skip-broken")
+  PACKAGE_INSTALL=("apt -y install" "apt -y install" "yum -y install")
+  PACKAGE_UNINSTALL=("apt -y autoremove" "apt -y autoremove" "yum -y autoremove")
+
+  for int in "${!REGEX[@]}"; do
+    [[ "${SYS,,}" =~ ${REGEX[int]} ]] && SYSTEM="${RELEASE[int]}" && break
+  done
+
+  # Проверка на кастомизированные системы от различных производителей
+  if [ -z "$SYSTEM" ]; then
+    [ -x "$(type -p yum)" ] && int=2 && SYSTEM='CentOS' || error " $(text 5) "
+  fi
+
+  # Определение основной версии Linux
+  MAJOR_VERSION=$(sed "s/[^0-9.]//g" <<< "$SYS" | cut -d. -f1)
+
+  # Сначала исключаем системы, указанные в EXCLUDE, затем для оставшихся делаем сравнение по основной версии
+  for ex in "${EXCLUDE[@]}"; do [[ ! "${SYS,,}" =~ $ex ]]; done &&
+  [[ "$MAJOR_VERSION" -lt "${MAJOR[int]}" ]] && error " $(text 71) "
+}
+
+###################################
+### Checking and installing dependencies
+###################################
+check_dependencies() {
+  # Зависимости, необходимые для трех основных систем
+  [ "${SYSTEM}" = 'CentOS' ] && ${PACKAGE_INSTALL[int]} vim-common epel-release
+  DEPS_CHECK=("ping" "wget" "curl" "systemctl" "ip" "sudo")
+  DEPS_INSTALL=("iputils-ping" "wget" "curl" "systemctl" "iproute2" "sudo")
+
+  for g in "${!DEPS_CHECK[@]}"; do
+    [ ! -x "$(type -p ${DEPS_CHECK[g]})" ] && [[ ! "${DEPS[@]}" =~ "${DEPS_INSTALL[g]}" ]] && DEPS+=(${DEPS_INSTALL[g]})
+  done
+
+  if [ "${#DEPS[@]}" -ge 1 ]; then
+    info "\n $(text 72) ${DEPS[@]} \n"
+    ${PACKAGE_UPDATE[int]}
+    ${PACKAGE_INSTALL[int]} ${DEPS[@]}
+  else
+    info "\n $(text 73) \n"
+  fi
+}
+
+###################################
+### Root check
+###################################
 check_root() {
-    if [[ $EUID -ne 0 ]]; then
-        error " $(text 8) "
-    fi
+  if [[ $EUID -ne 0 ]]; then
+    error " $(text 8) "
+  fi
 }
 
 ### Проверка IP-адреса ###
@@ -414,8 +489,6 @@ data_entry() {
     reading " $(text 67) " ENABLE_BOT_CHOISE
     if [[ -z "$ENABLE_BOT_CHOISE" || "$ENABLE_BOT_CHOISE" =~ ^[Yy]$ ]]; then
         echo
-        hint " $(text 68) \n" && reading " $(text 1) " BOT_CHOISE
-        echo
         reading " $(text 35) " ADMIN_ID
         echo
         reading " $(text 34) " BOT_TOKEN_PANEL
@@ -430,50 +503,116 @@ data_entry() {
     SUBJSONURI=https://${DOMAIN}/${SUBJSONPATH}/
 }
 
-### Обновление системы и установка пакетов ###
-installation_of_utilities() {
-  info " $(text 36) "
-  apt-get update && apt-get upgrade -y && apt-get install -y \
-    jq \
-      ufw \
-      zip \
-      wget \
-      sudo \
-      curl \
-      screen \
-      gnupg2 \
-      sqlite3 \
-      certbot \
-      haproxy \
-      net-tools \
-      apache2-utils \
-      unattended-upgrades \
-      debian-archive-keyring \
-      python3-certbot-dns-cloudflare
-  
-    curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
-      | tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
-    gpg --dry-run --quiet --no-keyring --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg
-    echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
-    http://nginx.org/packages/debian `lsb_release -cs` nginx" \
-      | tee /etc/apt/sources.list.d/nginx.list
-    echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" \
-      | tee /etc/apt/preferences.d/99nginx
-    
-  apt-get update && apt-get install -y nginx systemd-resolved
+###################################
+### Install NGINX
+###################################
+nginx_gpg() {
+  case "$SYSTEM" in
+    Debian)
+      ${PACKAGE_INSTALL[int]} debian-archive-keyring
+      curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
+        | tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
+      gpg --dry-run --quiet --no-keyring --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg
+      echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
+      http://nginx.org/packages/debian `lsb_release -cs` nginx" \
+        | tee /etc/apt/sources.list.d/nginx.list
+      echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" \
+        | tee /etc/apt/preferences.d/99nginx
+      ;;
 
+    Ubuntu)
+      ${PACKAGE_INSTALL[int]} ubuntu-keyring
+      curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
+        | tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
+      gpg --dry-run --quiet --no-keyring --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg
+      echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
+      http://nginx.org/packages/ubuntu `lsb_release -cs` nginx" \
+        | tee /etc/apt/sources.list.d/nginx.list
+      echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" \
+        | tee /etc/apt/preferences.d/99nginx
+      ;;
+
+    CentOS|Fedora)
+      ${PACKAGE_INSTALL[int]} yum-utils
+      cat <<EOL > /etc/yum.repos.d/nginx.repo
+[nginx-stable]
+name=nginx stable repo
+baseurl=http://nginx.org/packages/centos/\$releasever/\$basearch/
+gpgcheck=1
+enabled=1
+gpgkey=https://nginx.org/keys/nginx_signing.key
+module_hotfixes=true
+
+[nginx-mainline]
+name=nginx mainline repo
+baseurl=http://nginx.org/packages/mainline/centos/\$releasever/\$basearch/
+gpgcheck=1
+enabled=0
+gpgkey=https://nginx.org/keys/nginx_signing.key
+module_hotfixes=true
+EOL
+      ;;
+  esac
+  ${PACKAGE_UPDATE[int]}
+  ${PACKAGE_INSTALL[int]} nginx
   systemctl daemon-reload
   systemctl start nginx
   systemctl enable nginx
   systemctl restart nginx
   systemctl status nginx --no-pager
+}
 
+###################################
+### Installing packages
+###################################
+installation_of_utilities() {
+  info " $(text 36) "
+  case "$SYSTEM" in
+    Debian|Ubuntu)
+      DEPS_PACK_CHECK=("jq" "ufw" "zip" "wget" "gpg" "nano" "cron" "sqlite3" "certbot" "vnstat" "openssl" "netstat" "htpasswd" "update-ca-certificates" "add-apt-repository" "unattended-upgrades" "certbot-dns-cloudflare")
+      DEPS_PACK_INSTALL=("jq" "ufw" "zip" "wget" "gnupg2" "nano" "cron" "sqlite3" "certbot" "vnstat" "openssl" "net-tools" "apache2-utils" "ca-certificates" "software-properties-common" "unattended-upgrades" "python3-certbot-dns-cloudflare")
+
+      for g in "${!DEPS_PACK_CHECK[@]}"; do
+        [ ! -x "$(type -p ${DEPS_PACK_CHECK[g]})" ] && [[ ! "${DEPS_PACK[@]}" =~ "${DEPS_PACK_INSTALL[g]}" ]] && DEPS_PACK+=(${DEPS_PACK_INSTALL[g]})
+      done
+
+      if [ "${#DEPS_PACK[@]}" -ge 1 ]; then
+        info " $(text 77) ": ${DEPS_PACK[@]}
+        ${PACKAGE_UPDATE[int]}
+        ${PACKAGE_INSTALL[int]} ${DEPS_PACK[@]}
+      else
+        info " $(text 78) "
+      fi
+      ;;
+
+    CentOS|Fedora)
+      DEPS_PACK_CHECK=("jq" "zip" "tar" "wget" "gpg" "nano" "crontab" "sqlite3" "openssl" "netstat" "nslookup" "htpasswd" "certbot" "update-ca-certificates" "certbot-dns-cloudflare")
+      DEPS_PACK_INSTALL=("jq" "zip" "tar" "wget" "gnupg2" "nano" "cronie" "sqlite" "openssl" "net-tools" "bind-utils" "httpd-tools" "certbot" "ca-certificates" "python3-certbot-dns-cloudflare")
+
+      for g in "${!DEPS_PACK_CHECK[@]}"; do
+        [ ! -x "$(type -p ${DEPS_PACK_CHECK[g]})" ] && [[ ! "${DEPS_PACK[@]}" =~ "${DEPS_PACK_INSTALL[g]}" ]] && DEPS_PACK+=(${DEPS_PACK_INSTALL[g]})
+      done
+
+      if [ "${#DEPS_PACK[@]}" -ge 1 ]; then
+        info " $(text 77) ": ${DEPS_PACK[@]}
+        ${PACKAGE_UPDATE[int]}
+        ${PACKAGE_INSTALL[int]} ${DEPS_PACK[@]}
+      else
+        info " $(text 78) "
+      fi
+      ;;
+  esac
+
+  nginx_gpg
+  ${PACKAGE_INSTALL[int]} systemd-resolved
   tilda "$(text 10)"
 }
 
-# systemd-resolved
+###################################
+### DNS Systemd-resolved
+###################################
 dns_systemd_resolved() {
-    tee /etc/systemd/resolved.conf <<EOF
+  tee /etc/systemd/resolved.conf <<EOF
 [Resolve]
 DNS=1.1.1.1 8.8.8.8 8.8.4.4
 #FallbackDNS=
@@ -481,7 +620,7 @@ Domains=~.
 DNSSEC=yes
 DNSOverTLS=yes
 EOF
-    systemctl restart systemd-resolved.service
+  systemctl restart systemd-resolved.service
 }
 
 dns_adguard_home() {
@@ -560,28 +699,63 @@ EOF
     esac
 }
 
-### Добавление пользователя ###
+###################################
+### Creating a user
+###################################
 add_user() {
-    info " $(text 39) "
-    useradd -m -s $(which bash) -G sudo ${USERNAME}
-    echo "${USERNAME}:${PASSWORD}" | chpasswd
-    mkdir -p /home/${USERNAME}/.ssh/
-    touch /home/${USERNAME}/.ssh/authorized_keys
-    chown ${USERNAME}: /home/${USERNAME}/.ssh
-    chmod 700 /home/${USERNAME}/.ssh
-    chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/authorized_keys
-    echo ${USERNAME}
-    tilda "$(text 10)"
+  info " $(text 39) "
+
+  case "$SYSTEM" in
+    Debian|Ubuntu)
+      useradd -m -s $(which bash) -G sudo ${USERNAME}
+      ;;
+
+    CentOS|Fedora)
+      useradd -m -s $(which bash) -G wheel ${USERNAME}
+      ;;
+  esac
+  echo "${USERNAME}:${PASSWORD}" | chpasswd
+  mkdir -p /home/${USERNAME}/.ssh/
+  touch /home/${USERNAME}/.ssh/authorized_keys
+  chown -R ${USERNAME}: /home/${USERNAME}/.ssh
+  chmod -R 700 /home/${USERNAME}/.ssh
+
+  tilda "$(text 10)"
 }
 
-### Безопасность ###
-unattended_upgrade() {
-    info " $(text 40) "
-    echo 'Unattended-Upgrade::Mail "root";' >> /etc/apt/apt.conf.d/50unattended-upgrades
-    echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | debconf-set-selections
-    dpkg-reconfigure -f noninteractive unattended-upgrades
-    systemctl restart unattended-upgrades
-    tilda "$(text 10)"
+###################################
+### Automatic system update
+###################################
+setup_auto_updates() {
+  info " $(text 40) "
+
+  case "$SYSTEM" in
+    Debian|Ubuntu)
+      echo 'Unattended-Upgrade::Mail "root";' >> /etc/apt/apt.conf.d/50unattended-upgrades
+      echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | debconf-set-selections
+      dpkg-reconfigure -f noninteractive unattended-upgrades
+      systemctl restart unattended-upgrades
+      ;;
+
+    CentOS|Fedora)
+      cat > /etc/dnf/automatic.conf <<EOF
+[commands]
+upgrade_type = security
+random_sleep = 0
+download_updates = yes
+apply_updates = yes
+
+[email]
+email_from = root@localhost
+email_to = root
+email_host = localhost
+EOF
+      systemctl enable --now dnf-automatic.timer
+      systemctl status dnf-automatic.timer
+      ;;
+  esac
+
+  tilda "$(text 10)"
 }
 
 ### BBR ###
@@ -629,41 +803,45 @@ warp() {
 
 ### СЕРТИФИКАТЫ ###
 issuance_of_certificates() {
-    info " $(text 44) "
-    touch cloudflare.credentials
-    CF_CREDENTIALS_PATH="/root/cloudflare.credentials"
-    chown root:root cloudflare.credentials
-    chmod 600 cloudflare.credentials
+  info " $(text 44) "
 
-    if [[ "$CFTOKEN" =~ [A-Z] ]]; then
-        echo "dns_cloudflare_api_token = ${CFTOKEN}" >> ${CF_CREDENTIALS_PATH}
+  CF_CREDENTIALS_PATH="/etc/letsencrypt/.cloudflare.credentials"
+  touch ${CF_CREDENTIALS_PATH}
+  chown root:root ${CF_CREDENTIALS_PATH}
+  chmod 600 ${CF_CREDENTIALS_PATH}
+
+  if [[ "$CFTOKEN" =~ [A-Z] ]]; then
+    cat > ${CF_CREDENTIALS_PATH} <<EOF
+dns_cloudflare_api_token = ${CFTOKEN}
+EOF
+  else
+    cat > ${CF_CREDENTIALS_PATH} <<EOF
+dns_cloudflare_email = ${EMAIL}
+dns_cloudflare_api_key = ${CFTOKEN}
+EOF
+  fi
+
+  attempt=0
+  max_attempts=2
+  while [ $attempt -lt $max_attempts ]; do
+    certbot certonly --dns-cloudflare --dns-cloudflare-credentials ${CF_CREDENTIALS_PATH} --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --cert-name ${DOMAIN} --no-eff-email --non-interactive
+	if [ $? -eq 0 ]; then
+      break
     else
-        echo "dns_cloudflare_email = ${EMAIL}" >> ${CF_CREDENTIALS_PATH}
-        echo "dns_cloudflare_api_key = ${CFTOKEN}" >> ${CF_CREDENTIALS_PATH}
+      attempt=$((attempt + 1))
+      sleep 5
     fi
-
-    while true; do
-        certbot certonly --dns-cloudflare --dns-cloudflare-credentials ${CF_CREDENTIALS_PATH} --dns-cloudflare-propagation-seconds 30 --rsa-key-size 4096 -d ${DOMAIN},*.${DOMAIN} --agree-tos -m ${EMAIL} --no-eff-email --non-interactive
-
-        if [ $? -eq 0 ]; then
-            break
-        else
-            sleep 5
-        fi
-    done
+  done
 
     { crontab -l; echo "0 5 1 */2 * certbot -q renew"; } | crontab -
-
     echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
-    echo ""
-    openssl dhparam -out /etc/nginx/dhparam.pem 2048
     
     tilda "$(text 10)"
 }
 
 nginx_conf() {
   cat > /etc/nginx/nginx.conf <<EOF
-user                                   www-data;
+user                                   ${USERNGINX};
 pid                                    /var/run/nginx.pid;
 worker_processes                       auto;
 worker_rlimit_nofile                   65535;
@@ -1256,6 +1434,7 @@ main_script_first() {
 
 ### Повторный запуск ###
 main_script_repeat() {
+    check_operating_system
     check_root
     clear
     check_ip
