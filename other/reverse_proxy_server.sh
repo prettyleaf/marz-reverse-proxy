@@ -56,8 +56,8 @@ E[19]="Enter SNI for Reality:"
 R[19]="Введите sni для Reality:"
 E[20]="Enter Grpc path:"
 R[20]="Введите путь к Grpc:"
-E[21]="Enter Split path:"
-R[21]="Введите путь к Split:"
+E[21]="Enter XHTTP path:"
+R[21]="Введите путь к XHTTP:"
 E[22]="Enter HttpUpgrade path:"
 R[22]="Введите путь к HttpUpgrade:"
 E[23]="Enter Websocket path:"
@@ -469,8 +469,6 @@ data_entry() {
     check_cf_token
     tilda "$(text 10)"
     SECRET_PASSWORD="84ghrhhu43884hgHGrhguhure7!"
-    reading " $(text 19) " REALITY
-    tilda "$(text 10)"
     validate_path "CDNGRPC"
     echo
     validate_path "CDNXHTTP"
@@ -478,8 +476,6 @@ data_entry() {
     validate_path "CDNHTTPU"
     echo
     validate_path "CDNWS"
-    echo
-    validate_path "METRICS"
     tilda "$(text 10)"
     choise_dns
     validate_path WEBBASEPATH
@@ -1114,7 +1110,7 @@ EOF
 update_hosts() {
     sqlite3 "$DB_PATH" <<EOF
 EOF
-    for ID in {1..7}; do
+    for ID in {1..6}; do
         case $ID in
             1)
                 REMARK="🚀 GRPC {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
@@ -1162,15 +1158,6 @@ EOF
                 FINGERPRINT="random"
                 ;;
             6)
-                REMARK="🚀 REALITY {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
-                ADDRESS="www.${DOMAIN}"
-                PORT="443"
-                SNI=""
-                HOST=""
-                SECURITY="inbound_default"
-                FINGERPRINT="random"
-                ;;
-            7)
                 REMARK="🚀 XTLS {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
                 ADDRESS="www.${DOMAIN}"
                 PORT="443"
@@ -1260,7 +1247,6 @@ EOF
         -e "s|TEMP_PATHSPLIT|$CDNXHTTP|g" \
         -e "s|TEMP_PATHHTTPU|$CDNHTTPU|g" \
         -e "s|TEMP_PATHWS|$CDNWS|g" \
-        -e "s|TEMP_REALITY|$REALITY|g" \
         -e "s|TEMP_PRIVATEKEY0|$PRIVATE_KEY0|g" \
         -e "s|TEMP_PRIVATEKEY1|$PRIVATE_KEY1|g" \
         xray_config.json
