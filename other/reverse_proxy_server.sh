@@ -492,11 +492,6 @@ data_entry() {
         reading " $(text 69) " BOT_TOKEN_IP_LIMIT
     fi
     tilda "$(text 10)"
-
-    WEBCERTFILE=/etc/letsencrypt/live/${DOMAIN}/fullchain.pem
-    WEBKEYFILE=/etc/letsencrypt/live/${DOMAIN}/privkey.pem
-    SUBURI=https://${DOMAIN}/${SUBPATH}/
-    SUBJSONURI=https://${DOMAIN}/${SUBJSONPATH}/
 }
 
 ###################################
