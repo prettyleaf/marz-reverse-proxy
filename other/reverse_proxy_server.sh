@@ -1060,6 +1060,16 @@ nginx_setup() {
   htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
   openssl dhparam -out /etc/nginx/dhparam.pem 2048
 
+  case "$SYSTEM" in
+    Debian|Ubuntu)
+      USERNGINX="www-data"
+      ;;
+
+    CentOS|Fedora)
+      USERNGINX="nginx"
+      ;;
+  esac
+
   nginx_conf
   stream_conf
   local_conf
@@ -1284,13 +1294,28 @@ EOF
 
 ### UFW ###
 enabling_security() {
-    info " $(text 47) "
-    ufw --force reset
-    ufw allow 443/tcp
-    ufw allow 22/tcp
-    ufw insert 1 deny from $(echo ${IP4} | cut -d '.' -f 1-3).0/22
-    ufw --force enable
-    tilda "$(text 10)"
+  info " $(text 47) "
+  BLOCK_ZONE_IP=$(echo ${IP4} | cut -d '.' -f 1-3).0/22
+
+  case "$SYSTEM" in
+    Debian|Ubuntu)
+      ufw --force reset
+      ufw limit 22/tcp comment 'SSH'
+      ufw allow 443/tcp comment 'WEB'
+      ufw insert 1 deny from "$BLOCK_ZONE_IP"
+      ufw --force enable
+      ;;
+
+    CentOS|Fedora)
+      systemctl enable --now firewalld
+      firewall-cmd --permanent --zone=public --add-port=22/tcp
+      firewall-cmd --permanent --zone=public --add-port=443/tcp
+      firewall-cmd --permanent --zone=public --add-rich-rule="rule family='ipv4' source address='$BLOCK_ZONE_IP' reject"
+      firewall-cmd --reload
+      ;;
+  esac
+
+  tilda "$(text 10)"
 }
 
 ### SSH ####
@@ -1434,7 +1459,6 @@ main_script_first() {
 
 ### Повторный запуск ###
 main_script_repeat() {
-    check_operating_system
     check_root
     clear
     check_ip
@@ -1454,6 +1478,7 @@ main_script_repeat() {
 main_choise() {
     log_entry
     select_language
+    check_operating_system
     if [ -f /usr/local/marz-rp/reinstallation_check ]; then
         info " $(text 4) "
         sleep 2
