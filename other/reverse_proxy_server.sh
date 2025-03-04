@@ -911,7 +911,7 @@ upstream web {
   server 127.0.0.1:7443;
 }
 upstream xtls {
-  server 127.0.0.1:8443;
+  server 127.0.0.1:9443;
 }
 upstream block {
   server 127.0.0.1:36076;
@@ -993,51 +993,6 @@ location ~* /(${SUBPATH}|${WEBBASEPATH}|api|docs|redoc|openapi.json|statics) {
 EOF
 }
 
-location_xhttp() {
-  cat > /etc/nginx/locations/xhttp.conf <<EOF
-# XHTTP
-location /${CDNXHTTP} {
-  grpc_pass grpc://unix:/dev/shm/uds2023.sock;
-  grpc_buffer_size         16k;
-  grpc_socket_keepalive    on;
-  grpc_read_timeout        1h;
-  grpc_send_timeout        1h;
-  grpc_set_header Connection         "";
-  grpc_set_header X-Forwarded-For    \$proxy_add_x_forwarded_for;
-  grpc_set_header X-Forwarded-Proto  \$scheme;
-  grpc_set_header X-Forwarded-Port   \$server_port;
-  grpc_set_header Host               \$host;
-  grpc_set_header X-Forwarded-Host   \$host;
-}
-EOF
-}
-
-location_cdn() {
-  cat > /etc/nginx/locations/grpc_ws.conf <<EOF
-# GRPC WEBSOCKET HTTPUpgrade
-location ~ ^/(?<fwdport>\d+)/(?<fwdpath>.*)\$ {
-  if (\$hack = 1) {return 404;}
-  client_max_body_size 0;
-  client_body_timeout 1d;
-  grpc_read_timeout 1d;
-  grpc_socket_keepalive on;
-  proxy_read_timeout 1d;
-  proxy_http_version 1.1;
-  proxy_buffering off;
-  proxy_request_buffering off;
-  proxy_socket_keepalive on;
-  proxy_set_header Upgrade \$http_upgrade;
-  proxy_set_header Connection "upgrade";
-  proxy_set_header Host \$host;
-  proxy_set_header X-Real-IP \$remote_addr;
-  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-  if (\$content_type ~* "GRPC") { grpc_pass grpc://127.0.0.1:\$fwdport\$is_args\$args; break; }
-  proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
-  break;
-}
-EOF
-}
-
 ### NGINX ###
 nginx_setup() {
   info " $(text 45) "
@@ -1064,8 +1019,6 @@ nginx_setup() {
   stream_conf
   local_conf
   location_panel
-  location_xhttp
-  location_cdn
 
   systemctl daemon-reload
   systemctl restart nginx
@@ -1111,7 +1064,7 @@ EOF
                 SNI=""
                 HOST="${DOMAIN}"
                 SECURITY="tls"
-                FINGERPRINT="random"
+                FINGERPRINT="chrome"
                 ;;
             2)
                 REMARK="🚀 XHTTP {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
@@ -1120,7 +1073,7 @@ EOF
                 SNI="${DOMAIN}"
                 HOST=""
                 SECURITY="tls"
-                FINGERPRINT="random"
+                FINGERPRINT="chrome"
                 ;;
             3)
                 REMARK="🚀 HTTPU {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
@@ -1129,7 +1082,7 @@ EOF
                 SNI="${DOMAIN}"
                 HOST="${DOMAIN}"
                 SECURITY="inbound_default"
-                FINGERPRINT="random"
+                FINGERPRINT="chrome"
                 ;;
             4)
                 REMARK="🚀 WS {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
@@ -1138,7 +1091,7 @@ EOF
                 SNI="${DOMAIN}"
                 HOST="${DOMAIN}"
                 SECURITY="inbound_default"
-                FINGERPRINT="random"
+                FINGERPRINT="chrome"
                 ;;
             5)
                 REMARK="🚀 STEAL {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
@@ -1147,16 +1100,25 @@ EOF
                 SNI=""
                 HOST=""
                 SECURITY="inbound_default"
-                FINGERPRINT="random"
+                FINGERPRINT="chrome"
                 ;;
             6)
+                REMARK="🚀 REALITY {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
+                ADDRESS="www.${DOMAIN}"
+                PORT="443"
+                SNI=""
+                HOST=""
+                SECURITY="inbound_default"
+                FINGERPRINT="chrome"
+                ;;
+            7)
                 REMARK="🚀 XTLS {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
                 ADDRESS="www.${DOMAIN}"
                 PORT="443"
                 SNI="www.${DOMAIN}"
                 HOST=""
                 SECURITY="tls"
-                FINGERPRINT="random"
+                FINGERPRINT="chrome"
                 ;;
         esac
         sqlite3 "$DB_PATH" <<EOF
@@ -1233,10 +1195,6 @@ EOF
     # Выполняем замены
     sed -i \
         -e "s|TEMP_DOMAIN|$DOMAIN|g" \
-        -e "s|TEMP_PATHGRPC|$CDNGRPC|g" \
-        -e "s|TEMP_XHTTP|$CDNXHTTP|g" \
-        -e "s|TEMP_PATHHTTPU|$CDNHTTPU|g" \
-        -e "s|TEMP_PATHWS|$CDNWS|g" \
         -e "s|TEMP_PRIVATEKEY0|$PRIVATE_KEY0|g" \
         -e "s|TEMP_PRIVATEKEY1|$PRIVATE_KEY1|g" \
         xray_config.json
