@@ -299,7 +299,7 @@ validate_path() {
             CDNGRPC)
                 reading " $(text 20) " PATH_VALUE
                 ;;
-            CDNSPLIT)
+            CDNXHTTP)
                 reading " $(text 21) " PATH_VALUE
                 ;;
             CDNHTTPU)
@@ -337,8 +337,8 @@ validate_path() {
         CDNGRPC)
             export CDNGRPC="$PATH_VALUE"
             ;;
-        CDNSPLIT)
-            export CDNSPLIT="$PATH_VALUE"
+        CDNXHTTP)
+            export CDNXHTTP="$PATH_VALUE"
             ;;
         CDNHTTPU)
             export CDNHTTPU="$PATH_VALUE"
@@ -363,8 +363,8 @@ validate_path() {
 
 choise_dns () {
     while true; do
-        hint " $(text 31) \n" && reading " $(text 1) " CHOISE
-        case $CHOISE in 
+        hint " $(text 31) \n" && reading " $(text 1) " CHOISE_DNS
+        case $CHOISE_DNS in 
             1)
                 info " $(text 32)"
                 tilda "$(text 10)"
@@ -393,13 +393,12 @@ data_entry() {
     tilda "$(text 10)"
     check_cf_token
     tilda "$(text 10)"
-    reading " $(text 70) " SECRET_PASSWORD
-    echo
+    SECRET_PASSWORD="84ghrhhu43884hgHGrhguhure7!"
     reading " $(text 19) " REALITY
     tilda "$(text 10)"
     validate_path "CDNGRPC"
     echo
-    validate_path "CDNSPLIT"
+    validate_path "CDNXHTTP"
     echo
     validate_path "CDNHTTPU"
     echo
@@ -421,7 +420,7 @@ data_entry() {
         echo
         reading " $(text 34) " BOT_TOKEN_PANEL
         echo
-        reading " $(text 69) " BOT_TOKEN_BAN_LIMIT_OR_TORRENT
+        reading " $(text 69) " BOT_TOKEN_IP_LIMIT
     fi
     tilda "$(text 10)"
 
@@ -445,6 +444,7 @@ installation_of_utilities() {
         gnupg2 \
         sqlite3 \
         certbot \
+        haproxy \
         net-tools \
         apache2-utils \
         unattended-upgrades \
@@ -532,23 +532,28 @@ EOF
 dns_encryption() {
     info " $(text 37) "
     dns_systemd_resolved
-    case $CHOISE in
+    case $CHOISE_DNS in
         1)
         COMMENT_AGH=""
         tilda "$(text 10)"
         ;;
         2)
-            COMMENT_AGH="location /${ADGUARDPATH}/ {
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header Range \$http_range;
-        proxy_set_header If-Range \$http_if_range;
-        proxy_redirect /login.html /${ADGUARDPATH}/login.html;
-        proxy_pass http://127.0.0.1:8081/;
-        break;
-    }"
+      mkdir -p /etc/nginx/locations/
+
+      cat > /etc/nginx/locations/adguard.conf <<EOF
+location /${ADGUARDPATH}/ {
+  if (\$hack = 1) {return 404;}
+  proxy_set_header Host \$host;
+  proxy_set_header X-Real-IP \$remote_addr;
+  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+  proxy_set_header X-Real-IP \$remote_addr;
+  proxy_set_header Range \$http_range;
+  proxy_set_header If-Range \$http_if_range;
+  proxy_redirect /login.html /${ADGUARDPATH}/login.html;
+  proxy_pass http://127.0.0.1:8081/;
+  break;
+}
+EOF
             dns_adguard_home
             dns_systemd_resolved_for_adguard
             tilda "$(text 10)"
@@ -587,39 +592,38 @@ unattended_upgrade() {
 
 ### BBR ###
 enable_bbr() {
-    info " $(text 41) "
-    if [[ ! "$(sysctl net.core.default_qdisc)" == *"= fq" ]]
-    then
-        echo "net.core.default_qdisc = fq" >> /etc/sysctl.conf
-    fi
-    if [[ ! "$(sysctl net.ipv4.tcp_congestion_control)" == *"bbr" ]]
-    then
-        echo "net.ipv4.tcp_congestion_control = bbr" >> /etc/sysctl.conf
-    fi
+  info " $(text 41) "
+
+  if ! grep -q "net.core.default_qdisc = fq" /etc/sysctl.conf; then
+      echo "net.core.default_qdisc = fq" >> /etc/sysctl.conf
+  fi
+  if ! grep -q "net.ipv4.tcp_congestion_control = bbr" /etc/sysctl.conf; then
+      echo "net.ipv4.tcp_congestion_control = bbr" >> /etc/sysctl.conf
+  fi
+
+  sysctl -p
 }
 
 ### Отключение IPv6 ###
 disable_ipv6() {
-    info " $(text 42) "
-    interface_name=$(ifconfig -s | awk 'NR==2 {print $1}')
-    if [[ ! "$(sysctl net.ipv6.conf.all.disable_ipv6)" == *"= 1" ]]
-    then
-        echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
-    fi
-    if [[ ! "$(sysctl net.ipv6.conf.default.disable_ipv6)" == *"= 1" ]]
-    then
-        echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
-    fi
-    if [[ ! "$(sysctl net.ipv6.conf.lo.disable_ipv6)" == *"= 1" ]]
-    then
-        echo "net.ipv6.conf.lo.disable_ipv6 = 1" >> /etc/sysctl.conf
-    fi
-    if [[ ! "$(sysctl net.ipv6.conf.$interface_name.disable_ipv6)" == *"= 1" ]]
-    then
-        echo "net.ipv6.conf.$interface_name.disable_ipv6 = 1" >> /etc/sysctl.conf
-    fi
-    sysctl -p
-    tilda "$(text 10)"
+  info " $(text 42) "
+  interface_name=$(ifconfig -s | awk 'NR==2 {print $1}')
+
+  if ! grep -q "net.ipv6.conf.all.disable_ipv6 = 1" /etc/sysctl.conf; then
+      echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
+  fi
+  if ! grep -q "net.ipv6.conf.default.disable_ipv6 = 1" /etc/sysctl.conf; then
+      echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
+  fi
+  if ! grep -q "net.ipv6.conf.lo.disable_ipv6 = 1" /etc/sysctl.conf; then
+      echo "net.ipv6.conf.lo.disable_ipv6 = 1" >> /etc/sysctl.conf
+  fi
+  if ! grep -q "net.ipv6.conf.$interface_name.disable_ipv6 = 1" /etc/sysctl.conf; then
+      echo "net.ipv6.conf.$interface_name.disable_ipv6 = 1" >> /etc/sysctl.conf
+  fi
+
+  sysctl -p
+  tilda "$(text 10)"
 }
 
 ### WARP ###
@@ -656,97 +660,80 @@ issuance_of_certificates() {
 
     { crontab -l; echo "0 5 1 */2 * certbot -q renew"; } | crontab -
 
-    nginx_or_haproxy=1
-    if [[ "${nginx_or_haproxy}" == "1" ]]; then
-        echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
-        echo ""
-        openssl dhparam -out /etc/nginx/dhparam.pem 2048
-    else
-        echo "renew_hook = cat /etc/letsencrypt/live/${DOMAIN}/fullchain.pem /etc/letsencrypt/live/${DOMAIN}/privkey.pem > /etc/haproxy/certs/${DOMAIN}.pem && systemctl restart haproxy" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
-        echo ""
-        openssl dhparam -out /etc/haproxy/dhparam.pem 2048
-    fi
+    echo "renew_hook = systemctl reload nginx" >> /etc/letsencrypt/renewal/${DOMAIN}.conf
+    echo ""
+    openssl dhparam -out /etc/nginx/dhparam.pem 2048
     
     tilda "$(text 10)"
 }
 
-# Prometheus
-monitoring() {
-    info " $(text 66) "
-    bash <(curl -Ls https://github.com/cortez24rus/grafana-prometheus/raw/refs/heads/main/prometheus_node_exporter.sh)
-    tilda "$(text 10)"
-}
-
-### NGINX ###
-nginx_setup() {
-    info " $(text 45) "
-    mkdir -p /etc/nginx/stream-enabled/
-    rm -rf /etc/nginx/conf.d/default.conf
-    touch /etc/nginx/.htpasswd
-    htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
-
-    nginx_conf
-    stream_conf
-    local_conf
-    random_site
-
-    sudo systemctl restart nginx
-    nginx -s reload
-    tilda "$(text 10)"
-}
-
 nginx_conf() {
-    cat > /etc/nginx/nginx.conf <<EOF
-user                              www-data;
-pid                               /run/nginx.pid;
-worker_processes                  auto;
-worker_rlimit_nofile              65535;
-error_log                         /var/log/nginx/error.log;
-include                           /etc/nginx/modules-enabled/*.conf;
-
+  cat > /etc/nginx/nginx.conf <<EOF
+user                                   www-data;
+pid                                    /var/run/nginx.pid;
+worker_processes                       auto;
+worker_rlimit_nofile                   65535;
+error_log                              /var/log/nginx/error.log;
+include                                /etc/nginx/modules-enabled/*.conf;
 events {
-    multi_accept                  on;
-    worker_connections            1024;
+  multi_accept                         on;
+  worker_connections                   1024;
 }
 
 http {
-    log_format proxy '\$proxy_protocol_addr [\$time_local] '
-                        '"\$request" \$status \$body_bytes_sent '
-                        '"\$http_referer" "\$http_user_agent"';
-#    log_format proxy '\$proxy_protocol_addr - \$remote_user [\$time_local] '
-#                        '"\$request" \$status \$body_bytes_sent '
-#                        '"\$http_referer" "\$http_user_agent"';
-
-    access_log                    /var/log/nginx/access.log proxy;
-    sendfile                      on;
-    tcp_nopush                    on;
-    tcp_nodelay                   on;
-    server_tokens                 off;
-    log_not_found                 off;
-    types_hash_max_size           2048;
-    types_hash_bucket_size        64;
-    client_max_body_size          16M;
-    keepalive_timeout             75s;
-    keepalive_requests            1000;
-    reset_timedout_connection     on;
-    include                       /etc/nginx/mime.types;
-    default_type                  application/octet-stream;
-    ssl_session_timeout           1d;
-    ssl_session_cache             shared:SSL:1m;
-    ssl_session_tickets           off;
-    ssl_prefer_server_ciphers     on;
-    ssl_protocols                 TLSv1.2 TLSv1.3;
-    ssl_ciphers                   TLS13_AES_128_GCM_SHA256:TLS13_AES_256_GCM_SHA384:TLS13_CHACHA20_POLY1305_SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305;
-    ssl_stapling                  on;
-    ssl_stapling_verify           on;
-    resolver                      127.0.0.1 valid=60s;
-    resolver_timeout              2s;
-    gzip                          on;
-
-    include                       /etc/nginx/conf.d/*.conf;
+  map \$request_uri \$cleaned_request_uri {
+    default \$request_uri;
+    "~^(.*?)(\?x_padding=[^ ]*)\$" \$1;
+  }
+  log_format json_analytics escape=json '{'
+    '\$time_local, '
+    '\$http_x_forwarded_for, '
+    '\$proxy_protocol_addr, '
+    '\$request_method '
+    '\$status, '
+    '\$http_user_agent, '
+    '\$cleaned_request_uri, '
+    '\$http_referer, '
+    '}';
+  set_real_ip_from                     127.0.0.1;
+  real_ip_header                       X-Forwarded-For;
+  real_ip_recursive                    on;
+  access_log                           /var/log/nginx/access.log json_analytics;
+  sendfile                             on;
+  tcp_nopush                           on;
+  tcp_nodelay                          on;
+  server_tokens                        off;
+  log_not_found                        off;
+  types_hash_max_size                  2048;
+  types_hash_bucket_size               64;
+  client_max_body_size                 16M;
+  keepalive_timeout                    75s;
+  keepalive_requests                   1000;
+  reset_timedout_connection            on;
+  include                              /etc/nginx/mime.types;
+  default_type                         application/octet-stream;
+  ssl_session_timeout                  1d;
+  ssl_session_cache                    shared:SSL:1m;
+  ssl_session_tickets                  off;
+  ssl_prefer_server_ciphers            on;
+  ssl_protocols                        TLSv1.2 TLSv1.3;
+  ssl_ciphers                          TLS13_AES_128_GCM_SHA256:TLS13_AES_256_GCM_SHA384:TLS13_CHACHA20_POLY1305_SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305;
+  ssl_stapling                         on;
+  ssl_stapling_verify                  on;
+  resolver                             127.0.0.1 valid=60s;
+  resolver_timeout                     2s;
+  gzip                                 on;
+  add_header X-XSS-Protection          "0" always;
+  add_header X-Content-Type-Options    "nosniff" always;
+  add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+  add_header Permissions-Policy        "interest-cohort=()" always;
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+  add_header X-Frame-Options           "SAMEORIGIN";
+  proxy_hide_header                    X-Powered-By;
+  include                              /etc/nginx/conf.d/*.conf;
 }
 stream {
-    include /etc/nginx/stream-enabled/stream.conf;
+  include /etc/nginx/stream-enabled/stream.conf;
 }
 EOF
 }
@@ -754,149 +741,167 @@ EOF
 stream_conf() {
     cat > /etc/nginx/stream-enabled/stream.conf <<EOF
 map \$ssl_preread_server_name \$backend {
-    ${DOMAIN}                   web;
-    www.${DOMAIN}               xtls;
-    ${REALITY}                  reality;
-    default                     block;
-}
-upstream block {
-    server 127.0.0.1:36076;
+  ${DOMAIN}                            web;
+  www.${DOMAIN}                        xtls;
+  default                              block;
 }
 upstream web {
-    server 127.0.0.1:7443;
-}
-upstream reality {
-    server 127.0.0.1:8443;
+  server 127.0.0.1:7443;
 }
 upstream xtls {
-    server 127.0.0.1:9443;
+  server 127.0.0.1:8443;
+}
+upstream block {
+  server 127.0.0.1:36076;
 }
 server {
-    listen 443                  reuseport;
-    ssl_preread                 on;
-    proxy_protocol              on;
-    proxy_pass                  \$backend;
+  listen 443                           reuseport;
+  ssl_preread                          on;
+  proxy_protocol                       on;
+  proxy_pass                           \$backend;
 }
 EOF
 }
 
 local_conf() {
-    cat > /etc/nginx/conf.d/local.conf <<EOF
+  cat > /etc/nginx/conf.d/local.conf <<EOF
 server {
-     listen 9090 default_server;
-     server_name _;
-     location / {
-         return 301  https://${DOMAIN}\$request_uri;
-     }
-}
-# Main
-server {
-    listen                      36076 ssl proxy_protocol;
-    ssl_reject_handshake        on;
+  listen                               127.0.0.1:80;
+  server_name                          ${DOMAIN} *.${DOMAIN};
+  location / {
+    return 301                         https://\$host\$request_uri;
+  }
 }
 server {
-    listen                      36077 ssl proxy_protocol;
-    http2                       on;
-    server_name                 ${DOMAIN} www.${DOMAIN};
+  listen                               127.0.0.1:9090 default_server;
+  server_name                          ${DOMAIN} *.${DOMAIN};
+  location / {
+    return 301                         https://\$host\$request_uri;
+  }
+}
+server {
+  listen                               127.0.0.1:36076 ssl proxy_protocol;
+  ssl_reject_handshake                 on;
+}
+server {
+  listen                               127.0.0.1:36077 ssl proxy_protocol;
+  http2                                on;
+  http3                                on;
+  server_name                          ${DOMAIN} *.${DOMAIN};
 
-    # SSL
-    ssl_certificate             ${WEBCERTFILE};
-    ssl_certificate_key         ${WEBKEYFILE};
-    ssl_trusted_certificate     /etc/letsencrypt/live/${DOMAIN}/chain.pem;
+  # SSL
+  ssl_certificate                      /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+  ssl_certificate_key                  /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+  ssl_trusted_certificate              /etc/letsencrypt/live/${DOMAIN}/chain.pem;
 
-    # Diffie-Hellman parameter for DHE ciphersuites
-    ssl_dhparam                          /etc/nginx/dhparam.pem;
+  # Diffie-Hellman parameter for DHE ciphersuites
+  ssl_dhparam                          /etc/nginx/dhparam.pem;
 
-    index index.html index.htm index.php index.nginx-debian.html;
-    root /var/www/html/;
+  # Site
+  index index.html index.htm index.php index.nginx-debian.html;
+  root /var/www/html/;
 
-    # Security headers
-    add_header X-XSS-Protection          "0" always;
-    add_header X-Content-Type-Options    "nosniff" always;
-    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
-    add_header Permissions-Policy        "interest-cohort=()" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-    add_header X-Frame-Options           "SAMEORIGIN";
-    proxy_hide_header X-Powered-By;
+  if (\$host !~* ^(.+\.)?${DOMAIN}\$ ){return 444;}
+  if (\$scheme ~* https) {set \$safe 1;}
+  if (\$ssl_server_name !~* ^(.+\.)?${DOMAIN}\$ ) {set \$safe "\${safe}0"; }
+  if (\$safe = 10){return 444;}
+  if (\$request_uri ~ "(\"|'|\`|~|,|:|--|;|%|\\$|&&|\?\?|0x00|0X00|\||\\|\{|\}|\[|\]|<|>|\.\.\.|\.\.\/|\/\/\/)"){set \$hack 1;}
+  error_page 400 402 403 500 501 502 503 504 =404 /404;
+  proxy_intercept_errors on;
 
-    # Security
-    if (\$host !~* ^(.+\.)?${DOMAIN}\$ ){return 444;}
-    if (\$scheme ~* https) {set \$safe 1;}
-    if (\$ssl_server_name !~* ^(.+\.)?${DOMAIN}\$ ) {set \$safe "\${safe}0"; }
-    if (\$safe = 10){return 444;}
-    if (\$request_uri ~ "(\"|'|\`|~|,|:|--|;|%|\\$|&&|\?\?|0x00|0X00|\||\\|\{|\}|\[|\]|<|>|\.\.\.|\.\.\/|\/\/\/)"){set \$hack 1;}
-    error_page 400 401 402 403 500 501 502 503 504 =404 /404;
-    proxy_intercept_errors on;
-
-    # Disable direct IP access
-    if (\$host = ${IP4}) {
-        return 444;
-    }
-
-#    location / {
-#        auth_basic "Restricted Content";
-#        auth_basic_user_file /etc/nginx/.htpasswd;
-#    }
-    location /${METRICS} {
-        auth_basic "Restricted Content";
-        auth_basic_user_file /etc/nginx/.htpasswd;
-        proxy_pass http://127.0.0.1:9100/metrics;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-    # Marz admin panel
-    location ~* /(${SUBPATH}|${WEBBASEPATH}|api|docs|redoc|openapi.json|statics) {
-        proxy_redirect off;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-    # Xray Config
-    location /${CDNSPLIT} {
-        proxy_pass http://127.0.0.1:2063;
-        proxy_http_version 1.1;
-        proxy_redirect off;
-    }
-    # Xray Config
-    location ~ ^/(?<fwdport>\d+)/(?<fwdpath>.*)\$ {
-        if (\$hack = 1) {return 404;}
-        client_max_body_size 0;
-        client_body_timeout 1d;
-        grpc_read_timeout 1d;
-        grpc_socket_keepalive on;
-        proxy_read_timeout 1d;
-        proxy_http_version 1.1;
-        proxy_buffering off;
-        proxy_request_buffering off;
-        proxy_socket_keepalive on;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        if (\$content_type ~* "GRPC") {
-            grpc_pass grpc://127.0.0.1:\$fwdport\$is_args\$args;
-            break;
-        }
-        if (\$http_upgrade ~* "(WEBSOCKET|WS)") {
-            proxy_pass https://127.0.0.1:\$fwdport\$is_args\$args;
-            break;
-            }
-        if (\$request_method ~* ^(PUT|POST|GET)\$) {
-            proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
-            break;
-        }
-    }
-    # Adguard home
-    ${COMMENT_AGH}
+  # Enable locations
+  include /etc/nginx/locations/*.conf;
 }
 EOF
+}
+
+location_panel() {
+  cat > /etc/nginx/locations/panel.conf <<EOF
+# PANEL
+location ~* /(${SUBPATH}|${WEBBASEPATH}|api|docs|redoc|openapi.json|statics) {
+  proxy_redirect off;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection "upgrade";
+  proxy_pass http://127.0.0.1:8000;
+  proxy_set_header Host \$host;
+  proxy_set_header X-Real-IP \$remote_addr;
+  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+}
+EOF
+}
+
+location_xhttp() {
+  cat > /etc/nginx/locations/xhttp.conf <<EOF
+# XHTTP
+location /${CDNXHTTP} {
+  grpc_pass grpc://unix:/dev/shm/uds2023.sock;
+  grpc_buffer_size         16k;
+  grpc_socket_keepalive    on;
+  grpc_read_timeout        1h;
+  grpc_send_timeout        1h;
+  grpc_set_header Connection         "";
+  grpc_set_header X-Forwarded-For    \$proxy_add_x_forwarded_for;
+  grpc_set_header X-Forwarded-Proto  \$scheme;
+  grpc_set_header X-Forwarded-Port   \$server_port;
+  grpc_set_header Host               \$host;
+  grpc_set_header X-Forwarded-Host   \$host;
+}
+EOF
+}
+
+location_cdn() {
+  cat > /etc/nginx/locations/grpc_ws.conf <<EOF
+# GRPC WEBSOCKET HTTPUpgrade
+location ~ ^/(?<fwdport>\d+)/(?<fwdpath>.*)\$ {
+  if (\$hack = 1) {return 404;}
+  client_max_body_size 0;
+  client_body_timeout 1d;
+  grpc_read_timeout 1d;
+  grpc_socket_keepalive on;
+  proxy_read_timeout 1d;
+  proxy_http_version 1.1;
+  proxy_buffering off;
+  proxy_request_buffering off;
+  proxy_socket_keepalive on;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection "upgrade";
+  proxy_set_header Host \$host;
+  proxy_set_header X-Real-IP \$remote_addr;
+  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+  if (\$content_type ~* "GRPC") { grpc_pass grpc://127.0.0.1:\$fwdport\$is_args\$args; break; }
+  proxy_pass http://127.0.0.1:\$fwdport\$is_args\$args;
+  break;
+}
+EOF
+}
+
+### NGINX ###
+nginx_setup() {
+  info " $(text 45) "
+
+  mkdir -p /etc/nginx/stream-enabled/
+  mkdir -p /etc/nginx/conf.d/
+  mkdir -p /etc/nginx/locations/
+  rm -rf /etc/nginx/conf.d/default.conf
+  touch /etc/nginx/.htpasswd
+  htpasswd -nb "$USERNAME" "$PASSWORD" > /etc/nginx/.htpasswd
+  openssl dhparam -out /etc/nginx/dhparam.pem 2048
+
+  nginx_conf
+  stream_conf
+  local_conf
+  location_panel
+  location_sub
+  location_sub_json
+  location_xhttp
+  location_cdn
+
+  systemctl daemon-reload
+  systemctl restart nginx
+  nginx -s reload
+
+  tilda "$(text 10)"
 }
 
 # Выбор рандомного сайта для маскировки
@@ -939,7 +944,7 @@ EOF
                 FINGERPRINT="random"
                 ;;
             2)
-                REMARK="🚀 SPLIT {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
+                REMARK="🚀 XHTTP {TIME_LEFT} {DATA_LEFT} {STATUS_EMOJI}"
                 ADDRESS="${DOMAIN}"
                 PORT="443"
                 SNI="${DOMAIN}"
@@ -1007,7 +1012,7 @@ marz_bot_install() {
     done
 
     jq \
-        --arg bot_token "$BOT_TOKEN_BAN_LIMIT_OR_TORRENT" \
+        --arg bot_token "$BOT_TOKEN_IP_LIMIT" \
         --arg admin "$ADMIN_ID" \
         --arg domain "$DOMAIN:443" \
         --arg username "$USERNAME" \
@@ -1021,26 +1026,6 @@ marz_bot_install() {
 
     rm -rf iplimit_config.*
     echo -e "1\n2\n1\n7" | bash <(curl -sSL https://houshmand-2005.github.io/v2iplimit.sh)
-
-    #TORRENT_BAN
-    mkdir -p /var/lib/marzban/log/
-    echo -e '\n\n' | bash <(curl -fsSL git.new/install)
-
-    sed -i \
-        -e "s|^#\?\s*AdminChatID:.*$|AdminChatID: \"${ADMIN_ID}\"|" \
-        -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_LIMIT_OR_TORRENT}\"|" \
-        -e "s|^#\?\s*LogFile:.*$|LogFile: \"/var/lib/marzban/log/access.log\"|" \
-        -e "s|^#\?\s*BlockDuration:.*$|BlockDuration: 1|" \
-        /opt/torrent-blocker/config.yaml
-
-    if [[ "$BOT_CHOISE" == "2" ]]; then
-        jq '(.log) = {
-          "access": "/var/lib/marzban/log/access.log",
-          "error": "/var/lib/marzban/log/error.log",
-          "loglevel": "error",
-          "dnsLog": false
-        }' xray_config.json > tmp.json && mv tmp.json xray_config.json
-    fi
 }
 
 ### Установка Marzban ###
@@ -1090,7 +1075,7 @@ EOF
     sed -i \
         -e "s|TEMP_DOMAIN|$DOMAIN|g" \
         -e "s|TEMP_PATHGRPC|$CDNGRPC|g" \
-        -e "s|TEMP_PATHSPLIT|$CDNSPLIT|g" \
+        -e "s|TEMP_PATHSPLIT|$CDNXHTTP|g" \
         -e "s|TEMP_PATHHTTPU|$CDNHTTPU|g" \
         -e "s|TEMP_PATHWS|$CDNWS|g" \
         -e "s|TEMP_REALITY|$REALITY|g" \
@@ -1120,8 +1105,6 @@ EOF
 
     # Настройка дизайна подписки
     sudo wget -N -P /var/lib/marzban/templates/subscription/  https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
-    systemctl stop torrent-blocker
-    systemctl start torrent-blocker
     timeout 5 marzban up
 
     tilda "$(text 10)"
@@ -1131,7 +1114,6 @@ EOF
 enabling_security() {
     info " $(text 47) "
     ufw --force reset
-    ufw allow 36079/tcp
     ufw allow 443/tcp
     ufw allow 22/tcp
     ufw insert 1 deny from $(echo ${IP4} | cut -d '.' -f 1-3).0/22
@@ -1172,7 +1154,7 @@ ssh_setup() {
         # Если ключ найден, продолжаем настройку SSH
         sed -i -e "
             s/#Port/Port/g;
-            s/Port 22/Port 36079/g;
+            s/Port 22/Port 22/g;
             s/#PermitRootLogin/PermitRootLogin/g;
             s/PermitRootLogin yes/PermitRootLogin prohibit-password/g;
             s/#PubkeyAuthentication/PubkeyAuthentication/g;
@@ -1238,7 +1220,7 @@ data_output() {
         out_data " $(text 61) " "https://${DOMAIN}/${ADGUARDPATH}/login.html"
     fi
     echo
-    out_data " $(text 62) " "ssh -p 36079 ${USERNAME}@${IP4}"
+    out_data " $(text 62) " "ssh -p 22 ${USERNAME}@${IP4}"
     echo
     out_data " $(text 63) " "$USERNAME"
     out_data " $(text 64) " "$PASSWORD"
