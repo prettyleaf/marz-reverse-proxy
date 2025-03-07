@@ -1161,7 +1161,7 @@ data_output() {
     printf '0\n' | marzban status | grep --color=never -i ':'
     echo
     out_data " $(text 59) " "https://${DOMAIN}/${WEBBASEPATH}/"
-    if [[ $choise == "2" ]]; then
+    if [[ $CHOISE == "2" ]]; then
         out_data " $(text 61) " "https://${DOMAIN}/${ADGUARDPATH}/login.html"
     fi
     echo
