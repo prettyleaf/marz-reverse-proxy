@@ -966,7 +966,7 @@ marz_bot_install() {
         -e "s|^#\?\s*AdminBotToken:.*$|AdminBotToken: \"${BOT_TOKEN_BAN_LIMIT_OR_TORRENT}\"|" \
         -e "s|^#\?\s*LogFile:.*$|LogFile: \"/var/lib/marzban/log/access.log\"|" \
         -e "s|^#\?\s*BlockDuration:.*$|BlockDuration: 1|" \
-        /opt/torrent-blocker/config.yaml
+        /opt/tblocker/config.yaml
 
     if [[ "$BOT_CHOISE" == "2" ]]; then
         jq '(.log) = {
@@ -1050,8 +1050,8 @@ EOF
 
     # Настройка дизайна подписки
     sudo wget -N -P /var/lib/marzban/templates/subscription/ https://raw.githubusercontent.com/cortez24rus/marz-sub/refs/heads/main/index.html
-    systemctl stop torrent-blocker
-    systemctl start torrent-blocker
+    systemctl stop tblocker
+    systemctl start tblocker
     timeout 7 marzban up
 
     tilda "$(text 10)"
@@ -1161,7 +1161,7 @@ data_output() {
     printf '0\n' | marzban status | grep --color=never -i ':'
     echo
     out_data " $(text 59) " "https://${DOMAIN}/${WEBBASEPATH}/"
-    if [[ $choise = "1" ]]; then
+    if [[ $choise == "2" ]]; then
         out_data " $(text 61) " "https://${DOMAIN}/${ADGUARDPATH}/login.html"
     fi
     echo
