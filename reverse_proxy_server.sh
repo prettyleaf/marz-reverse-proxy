@@ -510,10 +510,11 @@ dns_adguard_home() {
         sleep 3
     done
 
+    sleep 1
     sed -i \
-      -e "s/\${USERNAME}/username/g" \
-      -e "s/\${HASH}/hash/g" \
-      AdGuardHome/AdGuardHome.yaml
+    -e "s|username|${USERNAME}|g" \
+    -e "s|hash|${HASH}|g" \
+    AdGuardHome/AdGuardHome.yaml
 
     AdGuardHome/AdGuardHome -s restart
 }
@@ -537,30 +538,35 @@ dns_encryption() {
     dns_systemd_resolved
     case $CHOISE in
         1)
-          COMMENT_AGH=""
-          tilda "$(text 10)"
-          ;;
+            COMMENT_AGH=""
+            tilda "$(text 10)"
+            ;;
         2)
-          COMMENT_AGH="location /${ADGUARDPATH}/ {
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header Range \$http_range;
-        proxy_set_header If-Range \$http_if_range;
-        proxy_redirect /login.html /${ADGUARDPATH}/login.html;
-        proxy_pass http://127.0.0.1:8081/;
-        break;
-    }"
-          dns_adguard_home
-          dns_systemd_resolved_for_adguard
-          tilda "$(text 10)"
-          ;;
+            mkdir -p /etc/nginx/locations/
+
+            cat > /etc/nginx/locations/adguard.conf <<EOF
+location /${ADGUARDPATH}/ {
+    if (\$hack = 1) {return 404;}
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header Range \$http_range;
+    proxy_set_header If-Range \$http_if_range;
+    proxy_redirect /login.html /${ADGUARDPATH}/login.html;
+    proxy_pass http://127.0.0.1:8081/;
+    break;
+}
+EOF
+            dns_adguard_home
+            dns_systemd_resolved_for_adguard
+            tilda "$(text 10)"
+            ;;
         *)
 
-          warning " $(text 33)"
-          dns_encryption
-          ;;
+            warning " $(text 33)"
+            dns_encryption
+            ;;
     esac
 }
 
@@ -677,6 +683,8 @@ issuance_of_certificates() {
 nginx_setup() {
     info " $(text 45) "
     mkdir -p /etc/nginx/stream-enabled/
+    mkdir -p /etc/nginx/conf.d/
+    mkdir -p /etc/nginx/locations/
     rm -rf /etc/nginx/conf.d/default.conf
     touch /etc/nginx/.htpasswd
 
@@ -771,11 +779,11 @@ EOF
 local_conf() {
     cat > /etc/nginx/conf.d/local.conf <<EOF
 server {
-     listen 9090 default_server;
-     server_name _;
-     location / {
-         return 301  https://${DOMAIN}\$request_uri;
-     }
+    listen 9090 default_server;
+    server_name _;
+    location / {
+        return 301  https://${DOMAIN}\$request_uri;
+    }
 }
 # Main
 server {
@@ -829,7 +837,7 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
     # Adguard home
-    ${COMMENT_AGH}
+    include /etc/nginx/locations/adguard.conf;
 }
 EOF
 }
