@@ -683,7 +683,6 @@ issuance_of_certificates() {
 nginx_setup() {
     info " $(text 45) "
     mkdir -p /etc/nginx/stream-enabled/
-    mkdir -p /etc/nginx/conf.d/
     mkdir -p /etc/nginx/locations/
     rm -rf /etc/nginx/conf.d/default.conf
     touch /etc/nginx/.htpasswd
